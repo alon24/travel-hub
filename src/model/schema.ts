@@ -3,6 +3,8 @@ import { TRIP_SCHEMA_VERSION, type Trip } from './types.ts'
 
 const isoDate = z.iso.date()
 const isoDateTime = z.iso.datetime({ offset: true })
+/** Airline times are local to the airport; an offset is optional */
+const flightTime = z.iso.datetime({ offset: true, local: true })
 const iata = z.string().regex(/^[A-Z]{3}$/, 'Expected a 3-letter airport code, e.g. TLV')
 
 const traveler = z.object({
@@ -33,8 +35,8 @@ const flight = z.object({
   direction: z.enum(['outbound', 'between', 'return']),
   origin: iata,
   destination: iata,
-  departs: isoDateTime,
-  arrives: isoDateTime,
+  departs: flightTime,
+  arrives: flightTime,
   airlines: z.array(z.string()),
   flightNumbers: z.array(z.string()),
   stops: z.number().int().min(0),
@@ -52,6 +54,8 @@ const stay = z.object({
   destinationId: z.string().optional(),
   checkIn: isoDate,
   checkOut: isoDate,
+  price: z.number().min(0).optional(),
+  currency: z.string().length(3).optional(),
   address: z.string().optional(),
   location: z.tuple([z.number().min(-180).max(180), z.number().min(-90).max(90)]).optional(),
   url: z.url().optional(),

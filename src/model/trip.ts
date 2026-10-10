@@ -38,3 +38,11 @@ export function tripRoute(t: Pick<Trip, 'home' | 'flights' | 'destinations'>): {
   const to = out?.destination ?? firstAirport ?? '—'
   return { from: out?.origin ?? t.home, to, backFrom: back?.origin ?? lastAirport ?? to }
 }
+
+/** "Wed 18 Nov": the same in every browser and locale. */
+export function dayLabel(d: IsoDate): string {
+  const date = new Date(`${d}T00:00:00Z`)
+  const wd = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getUTCDay()]
+  const mon = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][date.getUTCMonth()]
+  return `${wd} ${date.getUTCDate()} ${mon}`
+}

@@ -6,6 +6,14 @@ One place to plan a vacation. The landing page for the travel apps, and the home
 - **MyMaps AI**: maps with day-by-day itineraries · https://alon24.github.io/mymaps-ai/
 - **Trip** (new): one record per vacation holding its dates, travelers, destinations, days, flights, stays, budget and links to the map and the flight searches. Type: [`src/model/types.ts`](src/model/types.ts), validation: [`src/model/schema.ts`](src/model/schema.ts), example: [`src/data/example-trip.json`](src/data/example-trip.json).
 
+## Plan a trip
+1. **Plan a trip**: cities in travel order, a rough start date, nights and travelers. The nights are split between the cities (flying home from the last one is fine).
+2. **Find flights in Skyhop** opens Skyhop with the search filled in. Its **Save to my Travel Hub trip** button sends the picked flights back (`#/handoff/<base64url JSON>`, contract in [`src/model/handoff.ts`](src/model/handoff.ts), example in [`src/test/fixtures/skyhop-handoff.json`](src/test/fixtures/skyhop-handoff.json)).
+3. **Where you sleep**: Booking.com and Airbnb links per city with the dates and group size filled in, then save the place you booked. It gets a pin on the map.
+4. **Plan the days on a map** opens MyMaps AI with a layer per day, the airports and the hotels (`#/import/<MapDoc>`). Ask its AI to fill in the days.
+
+Trips are kept in this browser (`localStorage`); all three apps share the `alon24.github.io` origin.
+
 Built and deployed the same way as MyMaps AI: React + TypeScript + Vite + vite-plugin-pwa, deployed to GitHub Pages by `.github/workflows/deploy.yml` on every push to `main`.
 
 ## One-time setup

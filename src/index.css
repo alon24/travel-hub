@@ -151,3 +151,86 @@ img{max-width:100%}
 .diagram .node-title{font-family:var(--display);font-size:16px;font-weight:700}
 .diagram .t-sky{fill:var(--sky);font-weight:600} .diagram .t-map{fill:var(--map);font-weight:600} .diagram .t-strong{font-weight:600}
 .codebox pre{padding-top:44px}
+
+/* ---------- trips: planner, list and the Trip page ---------- */
+a.brand{text-decoration:none;color:inherit}
+.hint{color:var(--muted);font-size:.86rem}
+.banner{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:12px 16px;border:1px solid var(--danger);border-radius:12px;color:var(--danger)}
+.page{display:grid;gap:8px;max-width:720px}
+input,select{font:inherit;color:var(--ink);background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;min-width:0;width:100%}
+input:focus-visible{outline:2px solid var(--sky);outline-offset:1px}
+.planner{display:grid;gap:18px;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:24px}
+.planner .row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.field{display:grid;gap:6px;min-width:0}
+.field>label{font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.places{display:flex;flex-wrap:wrap;gap:8px;align-items:center;border:1.5px solid var(--line);border-radius:12px;padding:6px;background:var(--surface)}
+.places input{border:none;flex:1;min-width:160px;width:auto;padding:6px}
+.place-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 6px 4px 12px;border-radius:999px;background:var(--code-bg);border:1px solid var(--line)}
+.place-chip button{border:none;background:none;font-size:1.1rem;cursor:pointer;color:var(--muted);padding:0 6px}
+.stepper{display:flex;align-items:center;border:1.5px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface)}
+.stepper button{border:none;background:none;font-size:1.3rem;width:46px;height:44px;cursor:pointer;color:var(--ink)}
+.stepper input{border:none;text-align:center;font-family:var(--mono);font-weight:600;-moz-appearance:textfield}
+.stepper input::-webkit-inner-spin-button{display:none}
+.form-error{color:var(--danger);margin:0}
+.planner .btn.solid{justify-self:start}
+
+.trips{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.trip-card{display:grid;gap:6px;padding:18px;border:1px solid var(--line);border-radius:14px;background:var(--surface);text-decoration:none;border-top:4px solid var(--amber)}
+.trip-card b{font-family:var(--display);font-weight:500;font-size:1.05rem}
+.trip-card.new{border-style:dashed;border-top:4px dashed var(--line);background:transparent}
+.trip-card:hover{border-color:var(--amber)}
+
+.trip-page{display:grid;gap:22px}
+.trip-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.back{text-decoration:none;color:var(--muted);font-weight:600}
+.steps{display:flex;gap:6px;list-style:none;margin:0;padding:0;font-family:var(--mono);font-size:.76rem;letter-spacing:.06em;text-transform:uppercase}
+.steps li{padding:5px 12px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.steps li.done{color:var(--map);border-color:var(--map)}
+.steps li.done::before{content:"✓ "}
+.steps li.now{background:var(--amber);border-color:var(--amber);color:var(--bg);font-weight:600}
+.trip-grid{display:grid;grid-template-columns:380px 1fr;gap:24px;align-items:start}
+.trip-grid>*{min-width:0}
+.trip-side{display:grid;gap:14px;position:sticky;top:16px}
+.trip-side .danger{justify-self:start;color:var(--danger);border-color:transparent}
+.trip-main{display:grid;gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px 20px}
+.sec{display:grid;gap:12px;transition:border-color .3s,box-shadow .3s}
+.sec.next{border-color:var(--amber);box-shadow:0 0 0 4px color-mix(in srgb,var(--amber) 18%,transparent)}
+.sec h2{font-size:1.05rem;font-weight:500;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.sec h2 .num{width:26px;height:26px;border-radius:50%;display:inline-grid;place-items:center;border:1.5px solid var(--ink);font-family:var(--mono);font-size:.8rem}
+.chip.src{margin-left:auto;font-weight:400;font-size:.72rem}
+.chip.ok{color:var(--map);border-color:var(--map)}
+.legs{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.leg{display:grid;grid-template-columns:52px 1fr auto;gap:10px;align-items:baseline;padding:8px 0;border-bottom:1px dashed var(--line)}
+.leg b{font-weight:600;font-size:.9rem}
+.empty{display:grid;gap:12px;justify-items:start}
+.empty p{color:var(--muted)}
+.link{color:var(--sky);font-weight:600;font-size:.9rem}
+.stay-row{display:grid;gap:8px;padding:10px 0;border-top:1px dashed var(--line)}
+.stay-row:first-of-type{border-top:none}
+.stay-head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.stay{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;background:var(--code-bg);border-radius:10px;padding:8px 12px}
+.stay .x{border:none;background:none;color:var(--muted);font-size:1.1rem;cursor:pointer}
+.stay-gap{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.stay-form{display:grid;grid-template-columns:2fr 1fr 1.4fr auto auto;gap:8px;align-items:center}
+.stay-form input{padding:8px 10px}
+.days{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.days li{display:grid;grid-template-columns:40px 110px 1fr;gap:8px;padding:6px 0;border-bottom:1px dashed var(--line);font-size:.93rem}
+.day-n{color:var(--amber);font-weight:600}
+.sec-actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.budget{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px}
+.budget b{display:block;font-size:1.35rem}
+.budget .hint{grid-column:1/-1;margin:0}
+@media (max-width:860px){
+  .trip-grid{grid-template-columns:1fr}
+  .trip-side{position:static}
+  .stay-form{grid-template-columns:1fr 1fr}
+  .stay-form input:first-child{grid-column:1/-1}
+}
+@media (max-width:420px){
+  .planner .row{grid-template-columns:1fr}
+  .days li{grid-template-columns:34px 1fr}
+  .days li span:last-child{grid-column:2}
+  .leg{grid-template-columns:44px 1fr}
+  .leg>span:last-child{grid-column:2}
+}
