@@ -66,6 +66,12 @@ npm run icons        # re-render PWA icons from public/favicon.svg
 # deploy: push to main → GitHub Actions → GitHub Pages
 ```
 
+## Speed (learned 2026-10-10)
+- **While iterating, run only what you touched:** `npx vitest run <file or dir>` and `npx playwright test e2e/<spec> --project=desktop`. The full `npm test` + `npm run test:e2e` run once, before the PR.
+- **Port 4173 belongs to the e2e preview server** (`reuseExistingServer`). Never run another server there: Playwright will test it instead and fail across the board. Use another port (e.g. 4180) for anything else, and run e2e with `CI=1` to force its own server.
+- **Several repos at once:** start long suites in the background and keep working; don't wait on them one by one.
+- **Cross-app demo video:** `/mnt/project-files/travel-hub/demo/source/run.sh` reuses the app builds and a disk cache of map tiles, and checks the whole story in about a minute (`CHECK=1`) before the 2.5-minute recording. Fix the story with `CHECK=1` runs, record once.
+
 ## Definition of done
 1. Tests added/updated and passing (`npm test`, `npm run test:e2e` for touched flows).
 2. `npm run build` succeeds with no TypeScript errors.
