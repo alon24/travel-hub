@@ -234,3 +234,8 @@ input:focus-visible{outline:2px solid var(--sky);outline-offset:1px}
   .leg{grid-template-columns:44px 1fr}
   .leg>span:last-child{grid-column:2}
 }
+
+/* Drive sync status in the top bar */
+.sync { font: 600 12px/1 var(--mono); padding: 5px 8px; border-radius: 999px; border: 1px solid var(--line); white-space: nowrap; }
+.sync--synced { color: var(--map); }
+.sync--error { color: var(--danger); border-color: currentColor; }

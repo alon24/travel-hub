@@ -3,9 +3,11 @@ import type { Trip } from '../model/types.ts'
 
 /**
  * Trips saved in this browser (localStorage). Every read goes through parseTrip, so a damaged
- * or outdated entry is dropped instead of crashing the page. Drive sync can sit on top later, as in MyMaps AI.
+ * or outdated entry is dropped instead of crashing the page. tripSync.ts mirrors them to Google Drive.
  */
 const KEY = 'travel-hub.trips'
+/** Ids of trips deleted here, so a sync trashes their Drive copy instead of bringing them back */
+const DELETED = 'travel-hub.deleted'
 
 function readAll(): Trip[] {
   let raw: unknown
@@ -40,7 +42,28 @@ export function saveTrip(trip: Trip): Trip {
 }
 
 export function deleteTrip(id: string): void {
+  localStorage.setItem(DELETED, JSON.stringify([...new Set([...deletedTrips(), id])]))
   writeAll(readAll().filter((t) => t.id !== id))
+}
+
+/** Trips that came from another device: each replaces the copy here, in one write. */
+export function putTrips(trips: Trip[]): void {
+  if (!trips.length) return
+  const ids = new Set(trips.map((t) => t.id))
+  writeAll([...readAll().filter((t) => !ids.has(t.id)), ...trips])
+}
+
+export function deletedTrips(): string[] {
+  try {
+    const v = JSON.parse(localStorage.getItem(DELETED) ?? '[]')
+    return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : []
+  } catch {
+    return []
+  }
+}
+
+export function forgetDeleted(ids: string[]): void {
+  localStorage.setItem(DELETED, JSON.stringify(deletedTrips().filter((id) => !ids.includes(id))))
 }
 
 /** Calls back when trips change in this tab or another one. Returns the unsubscribe function. */

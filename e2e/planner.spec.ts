@@ -32,6 +32,9 @@ test('plan a two-city trip, get flights back from Skyhop, and see the nights lef
   await expect(page.getByText('3 nights open')).toBeVisible()
   await expect(page.getByRole('form', { name: 'Stay in Lisbon' }).or(page.getByRole('link', { name: /Booking/ }).first())).toBeVisible()
 
+  // Signed in, the trip is also kept in Google Drive (mocked), so the phone sees it
+  await expect(page.getByRole('status').filter({ hasText: 'In Drive' })).toBeVisible()
+
   // The trip survives a reload and shows on the landing page
   await page.goto('/')
   await expect(page.getByRole('link', { name: /Lisbon & Porto.*3 pax/ })).toBeVisible()

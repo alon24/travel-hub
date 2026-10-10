@@ -12,7 +12,7 @@ One place to plan a vacation. The landing page for the travel apps, and the home
 3. **Where you sleep**: Booking.com and Airbnb links per city with the dates and group size filled in, then save the place you booked. It gets a pin on the map.
 4. **Plan the days on a map** opens MyMaps AI with a layer per day, the airports and the hotels (`#/import/<MapDoc>`). Ask its AI to fill in the days.
 
-Trips are kept in this browser (`localStorage`); all three apps share the `alon24.github.io` origin.
+Trips are kept in this browser and, once you sign in, in a "Travel Hub" folder in your Google Drive, so your phone and computer show the same trips (the top bar says **☁ In Drive**). All three apps share the `alon24.github.io` origin.
 
 Built and deployed the same way as MyMaps AI: React + TypeScript + Vite + vite-plugin-pwa, deployed to GitHub Pages by `.github/workflows/deploy.yml` on every push to `main`.
 
