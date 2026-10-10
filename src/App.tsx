@@ -4,6 +4,7 @@ import typesSource from './model/types.ts?raw'
 import { CodeTabs } from './components/CodeTabs.tsx'
 import { TripDiagram } from './components/TripDiagram.tsx'
 import { TripPass } from './components/TripPass.tsx'
+import type { Session } from './auth/google.ts'
 import { GITHUB_URL, MYMAPS_URL, SKYHOP_URL } from './links.ts'
 import { parseTrip } from './model/schema.ts'
 import { versionLabel } from './version.ts'
@@ -59,7 +60,13 @@ const FIELDS: [string, string][] = [
   ['apps.skyhop', 'The searches behind the flights, and the shared trip chat if there is one.'],
 ]
 
-export default function App() {
+interface Props {
+  /** The signed-in Google account; absent when there is no sign-in gate (local dev) */
+  account?: Pick<Session, 'email' | 'name' | 'picture'> | null
+  onSignOut?: () => void
+}
+
+export default function App({ account, onSignOut }: Props = {}) {
   return (
     <div className="wrap">
       <header className="bar">
@@ -69,6 +76,13 @@ export default function App() {
           <a href="#trip">Trip</a>
           <a href={GITHUB_URL}>GitHub</a>
         </nav>
+        {account && (
+          <div className="account">
+            {account.picture && <img src={account.picture} alt="" width={28} height={28} referrerPolicy="no-referrer" />}
+            <span className="account-email" title={account.email}>{account.name ?? account.email}</span>
+            <button type="button" className="btn small" onClick={onSignOut}>Log out</button>
+          </div>
+        )}
       </header>
 
       <main className="main">

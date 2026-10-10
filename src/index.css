@@ -1,17 +1,17 @@
 /* Layout: a departures-board page. Hero thesis + a live Trip "boarding pass", then app rows, then the Trip model. */
 :root{
   --bg:#EEF2F1; --surface:#FFFFFF; --ink:#112027; --muted:#55686D; --line:#C8D3D2;
-  --map:#1F6F5C; --sky:#30638E; --amber:#C98A1E; --code-bg:#F6F8F8;
+  --map:#1F6F5C; --sky:#30638E; --amber:#C98A1E; --code-bg:#F6F8F8; --danger:#B3261E;
   --display:"Unbounded","Arial Black",system-ui,sans-serif;
   --body:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
   --mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#0C1619; --surface:#132227; --ink:#E4ECEC; --muted:#93A7AB; --line:#26393E;
-  --map:#4FB596; --sky:#6FA3D6; --amber:#E7B04E; --code-bg:#0F1C20; color-scheme:dark}}
+  --map:#4FB596; --sky:#6FA3D6; --amber:#E7B04E; --code-bg:#0F1C20; --danger:#F2B8B5; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0C1619; --surface:#132227; --ink:#E4ECEC; --muted:#93A7AB; --line:#26393E;
-  --map:#4FB596; --sky:#6FA3D6; --amber:#E7B04E; --code-bg:#0F1C20; color-scheme:dark}
+  --map:#4FB596; --sky:#6FA3D6; --amber:#E7B04E; --code-bg:#0F1C20; --danger:#F2B8B5; color-scheme:dark}
 
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
@@ -36,6 +36,19 @@ p{margin:0;max-width:62ch}
 .nav{display:flex;gap:20px;flex-wrap:wrap}
 .nav a{text-decoration:none;color:var(--muted);font-weight:500}
 .nav a:hover{color:var(--ink)}
+.account{display:flex;align-items:center;gap:10px;min-width:0}
+.account img{border-radius:50%}
+.account-email{font-size:.9rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:22ch}
+.btn.small{padding:6px 14px;font-size:.9rem;background:none;color:inherit;font-family:inherit;cursor:pointer}
+button.btn{font:inherit;font-weight:600;cursor:pointer}
+button.btn.solid{color:var(--bg)}
+button.btn:disabled{opacity:.6;cursor:progress}
+
+/* sign-in gate */
+.gate-screen{min-height:100dvh;display:grid;place-items:center;padding-block:40px}
+.gate-card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:32px;display:grid;gap:20px;justify-items:start;max-width:420px;width:100%}
+.gate-card h1{font-size:clamp(1.5rem,5vw,2rem)}
+.gate-error{color:var(--danger)}
 
 /* hero */
 .hero{display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center}

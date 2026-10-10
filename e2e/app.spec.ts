@@ -1,9 +1,10 @@
 import { expect, test } from '@playwright/test'
+import { signIn } from './google.ts'
 
 test.beforeEach(async ({ page }) => {
   await page.route(/fonts\.(googleapis|gstatic)/, (r) => r.abort())
-  await page.goto('/')
-  await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
+  await signIn(page)
+  await expect(page.getByRole('heading', { level: 1, name: /Every trip/ })).toBeVisible()
 })
 
 test('shows both apps and the example trip', async ({ page }) => {

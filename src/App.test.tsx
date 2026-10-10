@@ -1,6 +1,6 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import App from './App.tsx'
 import { MYMAPS_URL, SKYHOP_URL } from './links.ts'
 
@@ -24,5 +24,19 @@ describe('Landing page', () => {
     expect(screen.getByRole('tabpanel')).toHaveTextContent('export interface Trip')
     await userEvent.click(screen.getByRole('tab', { name: 'example.json' }))
     expect(screen.getByRole('tabpanel')).toHaveTextContent('"Rome & Florence"')
+  })
+
+  it('shows who is signed in and logs out from the top bar', async () => {
+    const onSignOut = vi.fn()
+    render(<App account={{ email: 'friend@example.com', name: 'Friend' }} onSignOut={onSignOut} />)
+    const bar = screen.getByRole('banner')
+    expect(within(bar).getByText('Friend')).toHaveAttribute('title', 'friend@example.com')
+    await userEvent.click(within(bar).getByRole('button', { name: 'Log out' }))
+    expect(onSignOut).toHaveBeenCalledOnce()
+  })
+
+  it('has no account area when there is no sign-in', () => {
+    render(<App />)
+    expect(screen.queryByRole('button', { name: 'Log out' })).not.toBeInTheDocument()
   })
 })

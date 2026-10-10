@@ -6,6 +6,10 @@ import { z } from 'zod'
  */
 const schema = z.object({
   VITE_WORKER_URL: z.union([z.literal(''), z.url()]).default(''),
+  /** Google OAuth client (same one as MyMaps AI). Empty = no sign-in gate (local dev only; CI refuses to build without it). */
+  VITE_GOOGLE_CLIENT_ID: z.string().default(''),
+  /** Who may use the hub: comma-separated addresses or `sha256:<hex of the lowercased address>`. Empty = any Google account. */
+  VITE_ALLOWED_EMAILS: z.string().default(''),
 })
 
 export type Env = z.infer<typeof schema>

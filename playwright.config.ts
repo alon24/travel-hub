@@ -23,5 +23,11 @@ export default defineConfig({
     port: 4173,
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,
+    // A fake Google client turns the sign-in gate on; e2e/auth.ts mocks Google itself.
+    // The allowlist holds the hash of e2e@example.com only.
+    env: {
+      VITE_GOOGLE_CLIENT_ID: 'e2e-client.apps.googleusercontent.com',
+      VITE_ALLOWED_EMAILS: 'sha256:d4138e09e92501a31257100056cbfa715506f5e2e4a3f95892c5b6ba4b1fb9fe',
+    },
   },
 })
