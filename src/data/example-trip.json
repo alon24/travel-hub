@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "id": "trip_rome_florence_2027",
+  "title": "Rome & Florence",
+  "status": "planning",
+  "startDate": "2027-03-12",
+  "endDate": "2027-03-19",
+  "home": "TLV",
+  "travelers": [
+    { "id": "t1", "name": "Ilan", "kind": "adult" },
+    { "id": "t2", "name": "Partner", "kind": "adult" },
+    { "id": "t3", "name": "Kid", "kind": "child", "age": 9 }
+  ],
+  "destinations": [
+    { "id": "rom", "name": "Rome", "country": "IT", "airport": "FCO", "arrive": "2027-03-12", "depart": "2027-03-16" },
+    { "id": "flr", "name": "Florence", "country": "IT", "airport": "FLR", "arrive": "2027-03-16", "depart": "2027-03-19" }
+  ],
+  "days": [
+    { "date": "2027-03-12", "title": "Arrive, Trastevere", "destinationId": "rom", "mapLayerId": "layer_d1" },
+    { "date": "2027-03-13", "title": "Colosseum & Forum", "destinationId": "rom", "mapLayerId": "layer_d2" },
+    { "date": "2027-03-16", "title": "Train to Florence", "destinationId": "flr", "mapLayerId": "layer_d5" }
+  ],
+  "flights": [
+    {
+      "id": "f1", "direction": "outbound",
+      "origin": "TLV", "destination": "FCO",
+      "departs": "2027-03-12T07:40:00+02:00", "arrives": "2027-03-12T10:55:00+01:00",
+      "airlines": ["El Al"], "flightNumbers": ["LY381"], "stops": 0,
+      "price": 214, "currency": "USD",
+      "bookingUrl": "https://www.elal.com/",
+      "booked": false, "source": "skyhop"
+    },
+    {
+      "id": "f2", "direction": "return",
+      "origin": "FLR", "destination": "TLV",
+      "departs": "2027-03-19T12:10:00+01:00", "arrives": "2027-03-19T19:45:00+02:00",
+      "airlines": ["ITA Airways"], "flightNumbers": ["AZ1672", "AZ808"], "stops": 1,
+      "price": 189, "currency": "USD",
+      "booked": false, "source": "skyhop"
+    }
+  ],
+  "stays": [
+    { "id": "s1", "name": "Apartment in Trastevere", "destinationId": "rom", "checkIn": "2027-03-12", "checkOut": "2027-03-16", "location": [12.4693, 41.8897] },
+    { "id": "s2", "name": "Hotel near Santa Maria Novella", "destinationId": "flr", "checkIn": "2027-03-16", "checkOut": "2027-03-19", "location": [11.2490, 43.7746] }
+  ],
+  "apps": {
+    "mymaps": { "mapId": "map_8f2c", "driveFileId": "1AbC...drive-file-id" },
+    "skyhop": { "searchIds": ["search_2027_rome_window"] }
+  },
+  "budget": { "currency": "USD", "planned": 4200 },
+  "notes": "Open-jaw: fly into Rome, home from Florence.",
+  "createdAt": "2026-10-10T13:30:00Z",
+  "updatedAt": "2026-10-10T13:30:00Z"
+}
