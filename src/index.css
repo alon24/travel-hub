@@ -239,3 +239,22 @@ input:focus-visible{outline:2px solid var(--sky);outline-offset:1px}
 .sync { font: 600 12px/1 var(--mono); padding: 5px 8px; border-radius: 999px; border: 1px solid var(--line); white-space: nowrap; }
 .sync--synced { color: var(--map); }
 .sync--error { color: var(--danger); border-color: currentColor; }
+
+/* admin */
+.page.admin{max-width:1080px;gap:20px;grid-template-columns:minmax(0,1fr)}
+.admin-block{display:grid;gap:14px;min-width:0}
+.admin-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.admin-add{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
+.admin-add label{display:grid;gap:4px;font-size:.85rem;color:var(--muted)}
+.admin-block input,.admin-block select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 10px;min-width:0}
+.admin-add input{width:min(320px,100%)}
+.table-wrap{overflow-x:auto;position:relative}
+.admin table{width:100%;border-collapse:collapse;font-size:.92rem}
+.admin th{text-align:left;font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:500;padding:6px 10px;border-bottom:1px solid var(--line)}
+.admin td{padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+.admin .num{text-align:right}
+.admin td .tag{margin-left:0}
+.audit{list-style:none;margin:0;padding:0;display:grid;gap:2px;font-size:.9rem}
+.audit li{display:flex;flex-wrap:wrap;gap:4px 12px;padding:6px 0;border-bottom:1px solid var(--line)}
+.audit .when{color:var(--muted);min-width:13ch}
+.audit .who{min-width:0;overflow-wrap:anywhere}

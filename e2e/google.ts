@@ -1,6 +1,43 @@
 import type { Page } from '@playwright/test'
 
 export const ALLOWED_EMAIL = 'e2e@example.com'
+export const ADMIN_EMAIL = 'admin@example.com'
+const WORKER = 'https://worker.e2e.test'
+const CORS = {
+  'access-control-allow-origin': '*',
+  'access-control-allow-headers': 'authorization, content-type, x-app',
+  'access-control-allow-methods': 'GET, POST, DELETE',
+}
+
+/**
+ * Stands in for the Worker's shared user list: /me answers for the signed-in account,
+ * and the admin API keeps an in-memory list.
+ */
+export async function mockWorker(page: Page, email: string) {
+  const roles: Record<string, 'admin' | 'user'> = { [ALLOWED_EMAIL]: 'user', [ADMIN_EMAIL]: 'admin' }
+  const added: { email: string; role: string }[] = []
+  await page.route(`${WORKER}/**`, async (r) => {
+    const req = r.request()
+    if (req.method() === 'OPTIONS') return r.fulfill({ status: 204, headers: CORS })
+    const url = new URL(req.url())
+    const role = roles[email]
+    if (!role) return r.fulfill({ status: 401, json: { error: 'unauthorized' }, headers: CORS })
+    if (url.pathname === '/me') return r.fulfill({ json: { email, role }, headers: CORS })
+    if (role !== 'admin') return r.fulfill({ status: 403, json: { error: 'admins only' }, headers: CORS })
+    if (url.pathname === '/admin/users' && req.method() === 'POST') {
+      const body = req.postDataJSON() as { email: string; role: string }
+      added.push(body)
+      return r.fulfill({ json: { user: body }, headers: CORS })
+    }
+    if (url.pathname === '/admin/users') {
+      const users = [{ email: ADMIN_EMAIL, role: 'admin', added_by: null, added_at: 1_700_000_000_000, last_seen: null }, ...added.map((u) => ({ ...u, added_by: email, added_at: Date.now(), last_seen: null }))]
+      return r.fulfill({ json: { users }, headers: CORS })
+    }
+    if (url.pathname === '/admin/usage') return r.fulfill({ json: { days: 30, rows: [] }, headers: CORS })
+    if (url.pathname === '/admin/audit') return r.fulfill({ json: { entries: [] }, headers: CORS })
+    return r.fulfill({ status: 404, json: { error: 'not found' }, headers: CORS })
+  })
+}
 
 /**
  * Stands in for Google: a fake Identity Services script that hands out a token at once,
@@ -39,6 +76,7 @@ export async function mockDrive(page: Page) {
 
 export async function signIn(page: Page, email = ALLOWED_EMAIL) {
   await mockGoogle(page, email)
+  await mockWorker(page, email)
   await mockDrive(page)
   await page.goto('/')
   await page.getByRole('button', { name: 'Sign in with Google' }).click()

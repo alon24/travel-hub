@@ -35,7 +35,7 @@ export async function askAi(
   e: Env = defaultEnv,
 ): Promise<string> {
   if (!aiEnabled(e)) throw new AiError('AI is not set up: VITE_WORKER_URL is empty', 0)
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  const headers: Record<string, string> = { 'Content-Type': 'application/json', 'X-App': 'hub' }
   if (auth.appToken) headers['X-App-Token'] = auth.appToken
   else if (auth.googleToken) headers.Authorization = `Bearer ${auth.googleToken}`
 

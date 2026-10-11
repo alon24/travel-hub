@@ -1,40 +1,48 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { isAllowed } from './allowlist.ts'
+import type { Role } from '../lib/account.ts'
 import { loadSession, signIn, signOut, type Session } from './google.ts'
+
+export type Account = Session & { role: Role }
 
 type State =
   | { kind: 'checking'; session: Session }
   | { kind: 'signed-out'; error?: string }
   | { kind: 'denied'; session: Session }
-  | { kind: 'signed-in'; session: Session }
+  | { kind: 'signed-in'; session: Account }
 
 interface Props {
   /** Empty = no gate (local dev without a Google client) */
   clientId: string
-  allowlist: string[]
-  children: (session: Session | null, signOut: () => void) => ReactNode
+  /** Asks who may come in (the Worker's shared user list): a role, or null for "not on the list" */
+  check: (session: Session) => Promise<Role | null>
+  children: (account: Account | null, signOut: () => void) => ReactNode
 }
 
-/** Shows the app only to allowed Google accounts. */
-export function AuthGate({ clientId, allowlist, children }: Props) {
+/** Shows the app only to Google accounts on the shared user list. */
+export function AuthGate({ clientId, check, children }: Props) {
   const [state, setState] = useState<State>(() => {
     const s = clientId ? loadSession() : null
     return s ? { kind: 'checking', session: s } : { kind: 'signed-out' }
   })
   const [busy, setBusy] = useState(false)
 
-  // Check a restored or fresh session against the allowlist
+  // Check a restored or fresh session against the user list
   const session = state.kind === 'checking' ? state.session : null
   useEffect(() => {
     if (!session) return
     let live = true
-    void isAllowed(session.email, allowlist).then((ok) => {
-      if (live) setState({ kind: ok ? 'signed-in' : 'denied', session })
-    })
+    check(session).then(
+      (role) => {
+        if (live) setState(role ? { kind: 'signed-in', session: { ...session, role } } : { kind: 'denied', session })
+      },
+      (e: unknown) => {
+        if (live) setState({ kind: 'signed-out', error: e instanceof Error ? e.message : 'Could not check your account.' })
+      },
+    )
     return () => {
       live = false
     }
-  }, [session, allowlist])
+  }, [session, check])
 
   // The Google token is short-lived: go back to the sign-in screen when it runs out
   const expires = state.kind === 'signed-in' ? state.session.expires : 0

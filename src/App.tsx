@@ -5,11 +5,14 @@ import { CodeTabs } from './components/CodeTabs.tsx'
 import { TripDiagram } from './components/TripDiagram.tsx'
 import { TripPass } from './components/TripPass.tsx'
 import type { Session } from './auth/google.ts'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { AdminPage } from './components/AdminPage.tsx'
 import { NewTrip } from './components/NewTrip.tsx'
 import { TripPage } from './components/TripPage.tsx'
 import { TripsList } from './components/TripsList.tsx'
 import { GITHUB_URL, MYMAPS_URL, SKYHOP_URL } from './links.ts'
+import { AccountApi, type Role } from './lib/account.ts'
+import { env } from './env.ts'
 import { go, useRoute } from './lib/route.ts'
 import { deleteTrip, getTrip, listTrips, onTripsChange, saveTrip } from './lib/tripStore.ts'
 import { useTripSync } from './lib/useTripSync.ts'
@@ -72,7 +75,7 @@ const FIELDS: [string, string][] = [
 
 interface Props {
   /** The signed-in Google account; absent when there is no sign-in gate (local dev) */
-  account?: Pick<Session, 'email' | 'name' | 'picture'> & { token?: string } | null
+  account?: Pick<Session, 'email' | 'name' | 'picture'> & { token?: string; role?: Role } | null
   onSignOut?: () => void
   /** Tests only: a stand-in for Google Drive */
   driveFetch?: typeof fetch
@@ -101,6 +104,9 @@ export default function App({ account, onSignOut, driveFetch }: Props = {}) {
   }, [route])
 
   const trip = route.name === 'trip' ? trips.find((t) => t.id === route.id) : undefined
+  const isAdmin = account?.role === 'admin' && Boolean(account.token) && Boolean(env.VITE_WORKER_URL)
+  const token = account?.token
+  const adminApi = useMemo(() => (isAdmin && token ? new AccountApi(env.VITE_WORKER_URL, token) : null), [isAdmin, token])
   return (
     <div className="wrap">
       <header className="bar">
@@ -110,6 +116,7 @@ export default function App({ account, onSignOut, driveFetch }: Props = {}) {
           <a href="#apps">Apps</a>
           <a href="#trip">Trip</a>
           <a href={GITHUB_URL}>GitHub</a>
+          {isAdmin && <a href="#/admin">Admin</a>}
         </nav>
         {account && (
           <div className="account">
@@ -139,6 +146,8 @@ export default function App({ account, onSignOut, driveFetch }: Props = {}) {
           <TripPage trip={trip} onChange={saveTrip} onDelete={() => { deleteTrip(trip.id); go('#/') }} />
         ) : route.name === 'trip' ? (
           <section className="page"><h2>{sync.kind === 'syncing' ? 'Getting your trips from Google Drive…' : "That trip isn't saved here."}</h2><a className="btn" href="#/">See your trips</a></section>
+        ) : route.name === 'admin' ? (
+          adminApi ? <AdminPage api={adminApi} self={account!.email} /> : <section className="page"><h2>This page is for admins.</h2><a className="btn" href="#/">See your trips</a></section>
         ) : route.name === 'handoff' ? (
           <section className="page"><p className="muted">Adding the flights to your trip…</p></section>
         ) : (
