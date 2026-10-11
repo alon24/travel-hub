@@ -53,8 +53,8 @@ export async function mockGoogle(page: Page, email = ALLOWED_EMAIL) {
     r.fulfill({
       contentType: 'text/javascript',
       body: `window.google = { accounts: { oauth2: {
-        initTokenClient: (cfg) => { const c = { callback: cfg.callback,
-          requestAccessToken: () => setTimeout(() => c.callback({ access_token: 'e2e-token', expires_in: 3600 })) }; return c },
+        initTokenClient: (cfg) => { const c = { callback: cfg.callback, scope: cfg.scope,
+          requestAccessToken: () => setTimeout(() => c.callback({ access_token: 'e2e-token', expires_in: 3600, scope: c.scope })) }; return c },
         revoke: (t, done) => done(),
       } } }`,
     }),
