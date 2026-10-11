@@ -12,7 +12,7 @@ export const TRIP_SCHEMA_VERSION = 1
 
 /** YYYY-MM-DD */
 export type IsoDate = string
-/** ISO 8601 timestamp, e.g. 2027-03-12T07:40:00+02:00 */
+/** ISO 8601 timestamp, e.g. 2027-03-12T07:40:00+02:00. Flight times may omit the offset: then they are local airport time. */
 export type IsoDateTime = string
 /** 3-letter IATA code, e.g. "TLV" */
 export type Iata = string
@@ -97,6 +97,9 @@ export interface FlightLeg {
 export interface Stay {
   id: string
   name: string
+  /** Total for the whole stay, in `currency` */
+  price?: number
+  currency?: string
   destinationId?: string
   checkIn: IsoDate
   checkOut: IsoDate

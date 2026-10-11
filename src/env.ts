@@ -10,6 +10,9 @@ const schema = z.object({
   VITE_GOOGLE_CLIENT_ID: z.string().default(''),
   /** Who may use the hub: comma-separated addresses or `sha256:<hex of the lowercased address>`. Empty = any Google account. */
   VITE_ALLOWED_EMAILS: z.string().default(''),
+  /** Sibling apps; empty = their GitHub Pages addresses (src/links.ts) */
+  VITE_SKYHOP_URL: z.union([z.literal(''), z.url()]).default(''),
+  VITE_MYMAPS_URL: z.union([z.literal(''), z.url()]).default(''),
 })
 
 export type Env = z.infer<typeof schema>

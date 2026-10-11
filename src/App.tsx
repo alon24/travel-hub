@@ -5,8 +5,17 @@ import { CodeTabs } from './components/CodeTabs.tsx'
 import { TripDiagram } from './components/TripDiagram.tsx'
 import { TripPass } from './components/TripPass.tsx'
 import type { Session } from './auth/google.ts'
+import { useEffect, useState } from 'react'
+import { NewTrip } from './components/NewTrip.tsx'
+import { TripPage } from './components/TripPage.tsx'
+import { TripsList } from './components/TripsList.tsx'
 import { GITHUB_URL, MYMAPS_URL, SKYHOP_URL } from './links.ts'
+import { go, useRoute } from './lib/route.ts'
+import { deleteTrip, getTrip, listTrips, onTripsChange, saveTrip } from './lib/tripStore.ts'
+import { readHandoff } from './model/handoff.ts'
+import { applyFlights } from './model/plan.ts'
 import { parseTrip } from './model/schema.ts'
+import type { Trip } from './model/types.ts'
 import { versionLabel } from './version.ts'
 
 const example = parseTrip(exampleJson)
@@ -67,11 +76,33 @@ interface Props {
 }
 
 export default function App({ account, onSignOut }: Props = {}) {
+  const route = useRoute()
+  const [trips, setTrips] = useState<Trip[]>(listTrips)
+  const [error, setError] = useState('')
+  useEffect(() => onTripsChange(() => setTrips(listTrips())), [])
+
+  // Flights sent from Skyhop: put them on their trip (or start one) and open it
+  useEffect(() => {
+    if (route.name !== 'handoff') return
+    try {
+      const h = readHandoff(window.location.hash)!
+      const trip = saveTrip(applyFlights(h.tripId ? getTrip(h.tripId) : undefined, h))
+      window.history.replaceState(null, '', `#/trip/${trip.id}`)
+      window.dispatchEvent(new HashChangeEvent('hashchange'))
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not read the flights from Skyhop.')
+      window.history.replaceState(null, '', '#/')
+      window.dispatchEvent(new HashChangeEvent('hashchange'))
+    }
+  }, [route])
+
+  const trip = route.name === 'trip' ? trips.find((t) => t.id === route.id) : undefined
   return (
     <div className="wrap">
       <header className="bar">
-        <div className="brand"><i />Travel Hub AI</div>
+        <a className="brand" href="#/"><i />Travel Hub AI</a>
         <nav className="nav">
+          <a href="#/">My trips</a>
           <a href="#apps">Apps</a>
           <a href="#trip">Trip</a>
           <a href={GITHUB_URL}>GitHub</a>
@@ -86,6 +117,37 @@ export default function App({ account, onSignOut }: Props = {}) {
       </header>
 
       <main className="main">
+        {error && <p className="banner" role="alert">{error} <button type="button" className="btn small" onClick={() => setError('')}>OK</button></p>}
+        {route.name === 'new' ? (
+          <section className="page">
+            <div className="section-head">
+              <span className="label">New trip</span>
+              <h2>Where are you going?</h2>
+            </div>
+            <NewTrip onCreate={(t) => go(`#/trip/${saveTrip(t).id}`)} />
+          </section>
+        ) : route.name === 'trip' && trip ? (
+          <TripPage trip={trip} onChange={saveTrip} onDelete={() => { deleteTrip(trip.id); go('#/') }} />
+        ) : route.name === 'trip' ? (
+          <section className="page"><h2>That trip isn't saved in this browser.</h2><a className="btn" href="#/">See your trips</a></section>
+        ) : route.name === 'handoff' ? (
+          <section className="page"><p className="muted">Adding the flights to your trip…</p></section>
+        ) : (
+          <Landing trips={trips} />
+        )}
+      </main>
+
+      <footer>
+        <span>Travel Hub AI · Skyhop + MyMaps AI + Trip</span>
+        <span className="mono">v{versionLabel()} · TRIP_SCHEMA_VERSION = {example.schema}</span>
+      </footer>
+    </div>
+  )
+}
+
+function Landing({ trips }: { trips: Trip[] }) {
+  return (
+    <>
         <section className="hero">
           <div className="hero-copy">
             <span className="label">One place to plan a vacation</span>
@@ -95,12 +157,15 @@ export default function App({ account, onSignOut }: Props = {}) {
               and the map.
             </p>
             <div className="ctas">
-              <a className="btn solid" href={SKYHOP_URL}>Search flights</a>
+              <a className="btn solid" href="#/new">Plan a trip</a>
+              <a className="btn" href={SKYHOP_URL}>Search flights</a>
               <a className="btn" href={MYMAPS_URL}>Open a map</a>
             </div>
           </div>
           <TripPass trip={example} label="Trip · example" />
         </section>
+
+        <TripsList trips={trips} />
 
         <section id="apps">
           <div className="section-head">
@@ -157,12 +222,6 @@ export default function App({ account, onSignOut }: Props = {}) {
             />
           </div>
         </section>
-      </main>
-
-      <footer>
-        <span>Travel Hub AI · Skyhop + MyMaps AI + Trip</span>
-        <span className="mono">v{versionLabel()} · TRIP_SCHEMA_VERSION = {example.schema}</span>
-      </footer>
-    </div>
+    </>
   )
 }
