@@ -24,8 +24,22 @@ export async function mockGoogle(page: Page, email = ALLOWED_EMAIL) {
   )
 }
 
+/** An empty Google Drive that accepts uploads, for the hub's trip sync */
+export async function mockDrive(page: Page) {
+  const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': 'authorization, content-type', 'access-control-allow-methods': 'GET, POST, PATCH' }
+  const uploads: string[] = []
+  await page.route(/googleapis\.com\/(upload\/)?drive\/v3\/files/, (r) => {
+    if (r.request().method() === 'OPTIONS') return r.fulfill({ status: 204, headers: cors })
+    if (r.request().method() === 'GET') return r.fulfill({ json: { files: [] }, headers: cors })
+    uploads.push(r.request().url())
+    return r.fulfill({ json: { id: `f${uploads.length}` }, headers: cors })
+  })
+  return uploads
+}
+
 export async function signIn(page: Page, email = ALLOWED_EMAIL) {
   await mockGoogle(page, email)
+  await mockDrive(page)
   await page.goto('/')
   await page.getByRole('button', { name: 'Sign in with Google' }).click()
 }

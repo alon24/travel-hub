@@ -5,7 +5,8 @@
  * The same token authorizes AI calls to the Worker (`Authorization: Bearer`).
  */
 
-const SCOPE = 'openid email profile'
+// drive.file: the hub keeps your trips in your own Google Drive (tripDrive.ts), so every device sees them
+const SCOPE = 'openid email profile https://www.googleapis.com/auth/drive.file'
 const SESSION_KEY = 'travel-hub.session'
 const GIS_SRC = 'https://accounts.google.com/gsi/client'
 const USERINFO = 'https://www.googleapis.com/oauth2/v3/userinfo'

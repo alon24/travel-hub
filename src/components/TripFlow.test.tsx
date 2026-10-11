@@ -8,6 +8,8 @@ import { applyFlights, createTrip } from '../model/plan.ts'
 import type { Trip } from '../model/types.ts'
 import { NewTrip } from './NewTrip.tsx'
 import { TripPage } from './TripPage.tsx'
+import { FakeDrive } from '../test/fakeDrive.ts'
+import { saveTrip } from '../lib/tripStore.ts'
 
 const NOW = new Date('2026-10-10T12:00:00Z')
 
@@ -108,5 +110,26 @@ describe('App routes', () => {
       window.dispatchEvent(new HashChangeEvent('hashchange'))
     })
     expect(screen.getByRole('form', { name: 'Plan a trip' })).toBeInTheDocument()
+  })
+})
+
+describe('Trips in Google Drive', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    window.location.hash = '#/'
+  })
+
+  it('a signed-in hub keeps its trips in Drive and says so in the top bar', async () => {
+    const drive = new FakeDrive()
+    saveTrip(createTrip({ title: 'Portugal', home: 'TLV', destinations: [{ code: 'LIS' }], startDate: '2026-11-18', nights: 3, adults: 3 }, NOW))
+    render(<App account={{ email: 'a@example.com', token: 'tok' }} driveFetch={drive.fetch} />)
+    expect(await screen.findByText('☁ In Drive')).toBeInTheDocument()
+    expect(drive.trips().map((t) => t.title)).toEqual(['Portugal'])
+  })
+
+  it('shows a Drive problem without blocking the trips', async () => {
+    render(<App account={{ email: 'a@example.com', token: 'expired' }} driveFetch={new FakeDrive().fetch} />)
+    expect(await screen.findByText('⚠ Drive')).toHaveAttribute('title', expect.stringMatching(/sign in again/))
+    expect(screen.getAllByRole('link', { name: /Plan a trip/ }).length).toBeGreaterThan(0)   // the hub still works
   })
 })

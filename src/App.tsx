@@ -12,6 +12,7 @@ import { TripsList } from './components/TripsList.tsx'
 import { GITHUB_URL, MYMAPS_URL, SKYHOP_URL } from './links.ts'
 import { go, useRoute } from './lib/route.ts'
 import { deleteTrip, getTrip, listTrips, onTripsChange, saveTrip } from './lib/tripStore.ts'
+import { useTripSync } from './lib/useTripSync.ts'
 import { readHandoff } from './model/handoff.ts'
 import { applyFlights } from './model/plan.ts'
 import { parseTrip } from './model/schema.ts'
@@ -71,11 +72,14 @@ const FIELDS: [string, string][] = [
 
 interface Props {
   /** The signed-in Google account; absent when there is no sign-in gate (local dev) */
-  account?: Pick<Session, 'email' | 'name' | 'picture'> | null
+  account?: Pick<Session, 'email' | 'name' | 'picture'> & { token?: string } | null
   onSignOut?: () => void
+  /** Tests only: a stand-in for Google Drive */
+  driveFetch?: typeof fetch
 }
 
-export default function App({ account, onSignOut }: Props = {}) {
+export default function App({ account, onSignOut, driveFetch }: Props = {}) {
+  const sync = useTripSync(account?.token, driveFetch)
   const route = useRoute()
   const [trips, setTrips] = useState<Trip[]>(listTrips)
   const [error, setError] = useState('')
@@ -111,6 +115,11 @@ export default function App({ account, onSignOut }: Props = {}) {
           <div className="account">
             {account.picture && <img src={account.picture} alt="" width={28} height={28} referrerPolicy="no-referrer" />}
             <span className="account-email" title={account.email}>{account.name ?? account.email}</span>
+            {sync.kind !== 'off' && (
+              <span className={`sync sync--${sync.kind}`} role="status" title={sync.kind === 'error' ? sync.message : 'Your trips are kept in your Google Drive, on every device you sign in on'}>
+                {sync.kind === 'syncing' ? 'Syncing…' : sync.kind === 'synced' ? '☁ In Drive' : '⚠ Drive'}
+              </span>
+            )}
             <button type="button" className="btn small" onClick={onSignOut}>Log out</button>
           </div>
         )}
@@ -129,7 +138,7 @@ export default function App({ account, onSignOut }: Props = {}) {
         ) : route.name === 'trip' && trip ? (
           <TripPage trip={trip} onChange={saveTrip} onDelete={() => { deleteTrip(trip.id); go('#/') }} />
         ) : route.name === 'trip' ? (
-          <section className="page"><h2>That trip isn't saved in this browser.</h2><a className="btn" href="#/">See your trips</a></section>
+          <section className="page"><h2>{sync.kind === 'syncing' ? 'Getting your trips from Google Drive…' : "That trip isn't saved here."}</h2><a className="btn" href="#/">See your trips</a></section>
         ) : route.name === 'handoff' ? (
           <section className="page"><p className="muted">Adding the flights to your trip…</p></section>
         ) : (
