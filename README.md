@@ -8,6 +8,7 @@ One place to plan a vacation. The landing page for the travel apps, and the home
 
 ## Plan a trip
 1. **Plan a trip**: cities in travel order, a rough start date, nights and travelers. The nights are split between the cities (flying home from the last one is fine).
+   Or just describe it ("3 nights in Lisbon and Porto in November, 3 of us"): the AI fills in the form, and you check it before creating the trip.
 2. **Find flights in Skyhop** opens Skyhop with the search filled in. Its **Save to my Travel Hub trip** button sends the picked flights back (`#/handoff/<base64url JSON>`, contract in [`src/model/handoff.ts`](src/model/handoff.ts), example in [`src/test/fixtures/skyhop-handoff.json`](src/test/fixtures/skyhop-handoff.json)).
 3. **Where you sleep**: Booking.com and Airbnb links per city with the dates and group size filled in, then save the place you booked. It gets a pin on the map.
 4. **Plan the days on a map** opens MyMaps AI with a layer per day, the airports and the hotels (`#/import/<MapDoc>`). Ask its AI to fill in the days.

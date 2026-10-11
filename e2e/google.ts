@@ -23,6 +23,11 @@ export async function mockWorker(page: Page, email: string) {
     const role = roles[email]
     if (!role) return r.fulfill({ status: 401, json: { error: 'unauthorized' }, headers: CORS })
     if (url.pathname === '/me') return r.fulfill({ json: { email, role }, headers: CORS })
+    // The AI's answer to "plan me a trip" (the hub's New trip page), as OpenRouter shapes it
+    if (url.pathname === '/ai') {
+      const plan = { title: 'Portugal with the guys', from: 'TLV', to: ['LIS', 'OPO'], start: '2026-11-18', nights: 3, adults: 3 }
+      return r.fulfill({ json: { choices: [{ message: { content: JSON.stringify(plan) } }] }, headers: CORS })
+    }
     if (role !== 'admin') return r.fulfill({ status: 403, json: { error: 'admins only' }, headers: CORS })
     if (url.pathname === '/admin/users' && req.method() === 'POST') {
       const body = req.postDataJSON() as { email: string; role: string }

@@ -157,8 +157,8 @@ a.brand{text-decoration:none;color:inherit}
 .hint{color:var(--muted);font-size:.86rem}
 .banner{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:12px 16px;border:1px solid var(--danger);border-radius:12px;color:var(--danger)}
 .page{display:grid;gap:8px;max-width:720px}
-input,select{font:inherit;color:var(--ink);background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;min-width:0;width:100%}
-input:focus-visible{outline:2px solid var(--sky);outline-offset:1px}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;min-width:0;width:100%}
+input:focus-visible,textarea:focus-visible{outline:2px solid var(--sky);outline-offset:1px}
 .planner{display:grid;gap:18px;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:24px}
 .planner .row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .field{display:grid;gap:6px;min-width:0}
@@ -173,6 +173,12 @@ input:focus-visible{outline:2px solid var(--sky);outline-offset:1px}
 .stepper input::-webkit-inner-spin-button{display:none}
 .form-error{color:var(--danger);margin:0}
 .planner .btn.solid{justify-self:start}
+/* "Describe it": the AI fills the planner below; amber like the Trip it becomes */
+.wish{display:grid;gap:10px;margin-bottom:14px;padding:16px 18px;border:1.5px dashed var(--amber);border-radius:18px;background:var(--surface)}
+.wish>label{font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.wish textarea{resize:vertical;min-height:2.8em}
+.wish .btn{justify-self:start}
+.wish p{margin:0}
 
 .trips{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
 .trip-card{display:grid;gap:6px;padding:18px;border:1px solid var(--line);border-radius:14px;background:var(--surface);text-decoration:none;border-top:4px solid var(--amber)}

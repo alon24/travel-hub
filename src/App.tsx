@@ -12,6 +12,8 @@ import { TripPage } from './components/TripPage.tsx'
 import { TripsList } from './components/TripsList.tsx'
 import { GITHUB_URL, MYMAPS_URL, SKYHOP_URL } from './links.ts'
 import { AccountApi, type Role } from './lib/account.ts'
+import { aiEnabled } from './lib/ai.ts'
+import { draftTrip } from './lib/planAi.ts'
 import { env } from './env.ts'
 import { go, useRoute } from './lib/route.ts'
 import { deleteTrip, getTrip, listTrips, onTripsChange, saveTrip } from './lib/tripStore.ts'
@@ -140,7 +142,10 @@ export default function App({ account, onSignOut, driveFetch }: Props = {}) {
               <span className="label">New trip</span>
               <h2>Where are you going?</h2>
             </div>
-            <NewTrip onCreate={(t) => go(`#/trip/${saveTrip(t).id}`)} />
+            <NewTrip
+              onCreate={(t) => go(`#/trip/${saveTrip(t).id}`)}
+              draft={token && aiEnabled() ? (text) => draftTrip(text, new Date().toISOString().slice(0, 10), { googleToken: token }) : undefined}
+            />
           </section>
         ) : route.name === 'trip' && trip ? (
           <TripPage trip={trip} onChange={saveTrip} onDelete={() => { deleteTrip(trip.id); go('#/') }} />
