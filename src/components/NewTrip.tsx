@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { AIRPORTS, findAirport } from '../data/airports.ts'
+import { AIRPORTS, COUNTRIES, countryLabel, findAirport, findCountry } from '../data/airports.ts'
 import { createTrip, addDays } from '../model/plan.ts'
 import type { Trip } from '../model/types.ts'
 import type { TripDraft } from '../lib/planAi.ts'
@@ -55,8 +55,11 @@ export function NewTrip({ onCreate, draft, today = new Date().toISOString().slic
 
   const addPlace = (text = place) => {
     const a = findAirport(text)
-    if (!a) return setError(`Pick a city from the list, or type its airport code (e.g. LIS).`)
-    if (!places.includes(a.code)) setPlaces([...places, a.code])
+    const country = a ? undefined : findCountry(text)
+    if (!a && !country) return setError(`Pick a city or a country from the list, or type an airport code (e.g. LIS).`)
+    // A country adds all its airports, so every one of them is searched; remove the ones you don't want
+    const codes = a ? [a.code] : country!.airports.map((x) => x.code)
+    setPlaces([...places, ...codes.filter((c) => !places.includes(c))])
     setPlace('')
     setError('')
   }
@@ -97,6 +100,7 @@ export function NewTrip({ onCreate, draft, today = new Date().toISOString().slic
     )}
     <form className="planner" onSubmit={submit} aria-label="Plan a trip">
       <datalist id="cities">
+        {COUNTRIES.map((c) => <option key={c.code} value={countryLabel(c)} />)}
         {AIRPORTS.map((a) => <option key={a.code} value={`${a.city} (${a.code})`} />)}
       </datalist>
       <div className="field">
@@ -112,11 +116,11 @@ export function NewTrip({ onCreate, draft, today = new Date().toISOString().slic
             id="nt-to"
             list="cities"
             value={place}
-            placeholder={places.length ? 'Add another city' : 'Lisbon, Porto…'}
+            placeholder={places.length ? 'Add another city or country' : 'Lisbon, Portugal…'}
             onChange={(e) => {
               setPlace(e.target.value)
-              // Picking from the list adds the city right away
-              if (/\([A-Z]{3}\)$/.test(e.target.value)) addPlace(e.target.value)
+              // Picking from the list adds the city (or the whole country) right away
+              if (/\([A-Z]{3}\)$/.test(e.target.value) || /\((1 airport|all \d+ airports)\)$/.test(e.target.value)) addPlace(e.target.value)
             }}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && place.trim()) {

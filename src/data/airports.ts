@@ -68,3 +68,28 @@ export function findAirport(text: string): Airport | undefined {
   const code = q.match(/\(([a-z]{3})\)$/)?.[1] ?? (q.length === 3 ? q : '')
   return (code && BY_CODE.get(code.toUpperCase())) || AIRPORTS.find((a) => a.city.toLowerCase() === q)
 }
+
+const COUNTRY_NAMES = new Intl.DisplayNames('en', { type: 'region' })
+const COUNTRY_ALIASES: Record<string, string> = { usa: 'US', america: 'US', uk: 'GB', england: 'GB', holland: 'NL' }
+
+export interface Country {
+  code: string
+  name: string
+  airports: Airport[]
+}
+
+/** Countries that have at least one known airport, by name ("Portugal"), in the picker's alphabetical order. */
+export const COUNTRIES: Country[] = [...new Set(AIRPORTS.map((a) => a.country))]
+  .map((code) => ({ code, name: COUNTRY_NAMES.of(code) ?? code, airports: AIRPORTS.filter((a) => a.country === code) }))
+  .sort((a, b) => a.name.localeCompare(b.name))
+
+/** The text of a country's entry in the destination list */
+export const countryLabel = (c: Country) => `${c.name} (${c.airports.length === 1 ? '1 airport' : `all ${c.airports.length} airports`})`
+
+/** "portugal", "Portugal (all 4 airports)", "uk" → the country, or undefined. Not the airport codes: "PT" alone isn't offered. */
+export function findCountry(text: string): Country | undefined {
+  const q = text.trim().toLowerCase().replace(/\s*\(.*\)$/, '')
+  if (!q) return undefined
+  const alias = COUNTRY_ALIASES[q]
+  return COUNTRIES.find((c) => c.code === alias || c.name.toLowerCase() === q)
+}

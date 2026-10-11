@@ -47,3 +47,36 @@ describe('NewTrip: describe it and the AI fills in the form', () => {
     expect(screen.queryByLabelText(/Describe it/)).not.toBeInTheDocument()
   })
 })
+
+describe('NewTrip: a country as a destination', () => {
+  it('adds every airport of a typed country, once, and the trip flies to all of them', async () => {
+    const onCreate = vi.fn()
+    render(<NewTrip onCreate={onCreate} today="2026-10-11" />)
+    await userEvent.type(screen.getByLabelText('Where to'), 'portugal{Enter}')
+    for (const code of ['LIS', 'OPO', 'FAO', 'FNC']) expect(screen.getByRole('button', { name: `Remove ${code}` })).toBeInTheDocument()
+
+    await userEvent.type(screen.getByLabelText('Where to'), 'Portugal (all 4 airports)')   // picking it again: no duplicates
+    expect(screen.getAllByRole('button', { name: /^Remove / })).toHaveLength(4)
+
+    await userEvent.click(screen.getByRole('button', { name: 'Remove FNC' }))                      // drop the ones you don't want
+    await userEvent.click(screen.getByRole('button', { name: /Create trip/ }))
+    expect((onCreate.mock.calls[0]![0] as Trip).destinations.map((d) => d.airport)).toEqual(['LIS', 'OPO', 'FAO'])
+  })
+
+  it('offers the countries in the list, and picking one adds its airports at once', async () => {
+    render(<NewTrip onCreate={vi.fn()} today="2026-10-11" />)
+    expect(document.querySelector('#cities option[value="Portugal (all 4 airports)"]')).not.toBeNull()
+    expect(document.querySelector('#cities option[value="Cyprus (all 2 airports)"]')).not.toBeNull()
+    await userEvent.type(screen.getByLabelText('Where to'), 'Greece (all 4 airports)')
+    expect(screen.getAllByRole('button', { name: /^Remove / })).toHaveLength(4)
+  })
+
+  it('knows common short names, and says what it does not know', async () => {
+    render(<NewTrip onCreate={vi.fn()} today="2026-10-11" />)
+    await userEvent.type(screen.getByLabelText('Where to'), 'uk{Enter}')
+    expect(screen.getByRole('button', { name: 'Remove LHR' })).toBeInTheDocument()
+    await userEvent.type(screen.getByLabelText('Where to'), 'Narnia{Enter}')
+    expect(screen.getByRole('alert')).toHaveTextContent('Pick a city or a country from the list')
+  })
+})
+
