@@ -40,6 +40,18 @@ test('plan a two-city trip, get flights back from Skyhop, and see the nights lef
   await expect(page.getByRole('link', { name: /Lisbon & Porto.*3 pax/ })).toBeVisible()
 })
 
+test('describe the trip in a sentence: the AI fills in the form, you check it and create', async ({ page }) => {
+  await page.getByRole('link', { name: 'Plan a trip' }).first().click()
+  await page.getByLabel(/Describe it/).fill('3 nights in Lisbon and Porto in mid November, 3 of us from Tel Aviv')
+  await page.getByRole('button', { name: 'Fill in the form' }).click()
+  await expect(page.getByText('Filled in. Check it, then create the trip.')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Remove OPO' })).toBeVisible()
+  await expect(page.getByLabel('Leave around')).toHaveValue('2026-11-18')
+  await expect(page).toHaveURL(/#\/new/)                               // nothing is created until you say so
+  await page.getByRole('button', { name: /Create trip/ }).click()
+  await expect(page.getByRole('article', { name: 'Trip: Portugal with the guys' })).toContainText('LIS')
+})
+
 test('a damaged Skyhop link explains itself instead of crashing', async ({ page }) => {
   await page.goto('/#/handoff/not-a-real-payload')
   await expect(page.getByRole('alert')).toContainText(/damaged|understand/)

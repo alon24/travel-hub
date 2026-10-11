@@ -2,17 +2,20 @@ import { useState, type FormEvent } from 'react'
 import { AIRPORTS, findAirport } from '../data/airports.ts'
 import { createTrip, addDays } from '../model/plan.ts'
 import type { Trip } from '../model/types.ts'
+import type { TripDraft } from '../lib/planAi.ts'
 
 interface Props {
   onCreate: (trip: Trip) => void
   /** Today, for the default dates (injectable for tests) */
   today?: string
+  /** Turns a sentence into a draft of this form (the AI); the box is hidden without it */
+  draft?: (text: string) => Promise<TripDraft>
 }
 
 const defaultStart = (today: string) => addDays(today, 30)
 
 /** Step one of a trip: where, when, how long and who. Everything else is filled in by the apps. */
-export function NewTrip({ onCreate, today = new Date().toISOString().slice(0, 10) }: Props) {
+export function NewTrip({ onCreate, draft, today = new Date().toISOString().slice(0, 10) }: Props) {
   const [from, setFrom] = useState('Tel Aviv (TLV)')
   const [places, setPlaces] = useState<string[]>([])
   const [place, setPlace] = useState('')
@@ -21,6 +24,34 @@ export function NewTrip({ onCreate, today = new Date().toISOString().slice(0, 10
   const [adults, setAdults] = useState(2)
   const [title, setTitle] = useState('')
   const [error, setError] = useState('')
+  const [wish, setWish] = useState('')
+  const [drafting, setDrafting] = useState(false)
+  const [note, setNote] = useState('')
+
+  // The AI only fills the form; nothing is created until you press Create trip
+  const fillIn = async () => {
+    if (!draft || !wish.trim()) return
+    setDrafting(true)
+    setNote('')
+    try {
+      const d = await draft(wish)
+      if (d.places.length) setPlaces(d.places)
+      if (d.home) setFrom(`${findAirport(d.home)?.city} (${d.home})`)
+      if (d.start) setStart(d.start)
+      if (d.nights) setNights(d.nights)
+      if (d.adults) setAdults(d.adults)
+      if (d.title) setTitle(d.title)
+      setError('')
+      setNote(
+        (d.places.length ? 'Filled in. Check it, then create the trip.' : "Couldn't tell where you're going. Add a city below.") +
+          (d.unknown.length ? ` Not in our city list yet: ${d.unknown.join(', ')}.` : ''),
+      )
+    } catch (e) {
+      setNote(e instanceof Error ? e.message : 'The AI is not available right now.')
+    } finally {
+      setDrafting(false)
+    }
+  }
 
   const addPlace = (text = place) => {
     const a = findAirport(text)
@@ -40,6 +71,30 @@ export function NewTrip({ onCreate, today = new Date().toISOString().slice(0, 10
   }
 
   return (
+    <>
+    {draft && (
+      <div className="wish" role="group" aria-label="Describe your trip">
+        <label htmlFor="nt-wish">Describe it <span className="hint">· AI fills in the form</span></label>
+        <textarea
+          id="nt-wish"
+          rows={2}
+          maxLength={500}
+          value={wish}
+          placeholder="3 nights in Lisbon and Porto in November, 3 of us from Tel Aviv"
+          onChange={(e) => setWish(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault()
+              void fillIn()
+            }
+          }}
+        />
+        <button type="button" className="btn" disabled={drafting || !wish.trim()} onClick={() => void fillIn()}>
+          {drafting ? 'Filling in…' : 'Fill in the form'}
+        </button>
+        {note && <p className="hint" role="status">{note}</p>}
+      </div>
+    )}
     <form className="planner" onSubmit={submit} aria-label="Plan a trip">
       <datalist id="cities">
         {AIRPORTS.map((a) => <option key={a.code} value={`${a.city} (${a.code})`} />)}
@@ -94,6 +149,7 @@ export function NewTrip({ onCreate, today = new Date().toISOString().slice(0, 10
       {error && <p className="form-error" role="alert">{error}</p>}
       <button type="submit" className="btn solid">Create trip →</button>
     </form>
+    </>
   )
 }
 
