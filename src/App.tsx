@@ -156,7 +156,7 @@ export default function App({ account, onSignOut, driveFetch }: Props = {}) {
       </main>
 
       <footer>
-        <span>Travel Hub AI · Skyhop + MyMaps AI + Trip</span>
+        <span>Travel Hub AI · Skyhop + MyMaps AI + Trip · <a href={`${import.meta.env.BASE_URL}privacy.html`}>Privacy</a> · <a href={`${import.meta.env.BASE_URL}terms.html`}>Terms</a></span>
         <span className="mono">v{versionLabel()} · TRIP_SCHEMA_VERSION = {example.schema}</span>
       </footer>
     </div>

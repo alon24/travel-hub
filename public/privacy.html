@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Privacy policy · Travel Hub AI</title>
+<link rel="stylesheet" href="legal.css" />
+</head>
+<body>
+<nav><a href="./">← Travel Hub AI</a></nav>
+<main>
+<h1>Privacy policy</h1>
+<p class="muted">Travel Hub AI, Skyhop and MyMaps AI · Last updated 11 October 2026</p>
+
+<p>Travel Hub AI (<a href="https://alon24.github.io/travel-hub/">alon24.github.io/travel-hub</a>), Skyhop and MyMaps AI are small personal trip-planning apps, open only to people the owner has invited. This page explains what they do with your data.</p>
+
+<h2>What we get from your Google account</h2>
+<p>When you sign in with Google we receive your email address, name and profile picture, and a short-lived access token. We use them only to check that you are on the invited list and to show who is signed in.</p>
+<p>With your permission the apps also use Google Drive's <code>drive.file</code> access. That lets them create and open only the files the apps themselves made (your trips and maps). They cannot see any other file in your Drive.</p>
+
+<h2>Where your data is kept</h2>
+<ul>
+<li><b>Your trips and maps</b> are saved in your own Google Drive and in your browser's local storage. We do not keep a copy of them on our servers.</li>
+<li><b>Shared trips in Skyhop</b> (a trip's group chat and its search) are kept on Cloudflare so everyone with the link sees the same chat.</li>
+<li><b>The invited list</b> (email address, role, who added you and when) is kept in a private Cloudflare database.</li>
+<li><b>An activity log</b> records each AI request and flight lookup: your email address, the app, the time, and the AI token count or the route searched. The owner uses it to see usage and to keep costs in check.</li>
+</ul>
+
+<h2>Services we send data to</h2>
+<ul>
+<li><b>OpenRouter</b> (AI model provider), when you use an AI feature: the text of your request and the trip or map details it needs.</li>
+<li><b>Google Flights</b>, when you search flights: airports, dates and number of travellers.</li>
+<li><b>OpenStreetMap / Nominatim</b>, for map tiles and to find places you name.</li>
+<li><b>Cloudflare</b> runs the small servers that do the above, and <b>GitHub Pages</b> serves the apps.</li>
+</ul>
+<p>We never sell your data, show ads, or use it for anything else. We never ask for or store payment or passport details.</p>
+
+<h2>Keeping and deleting data</h2>
+<p>You can sign out at any time and revoke the apps' access at <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a>. Trips and maps you made stay in your Drive until you delete them. To be removed from the invited list, or to have your activity log entries deleted, ask the owner or open an issue on <a href="https://github.com/alon24/travel-hub/issues">GitHub</a>.</p>
+
+<h2>Google API data</h2>
+<p>Use of information received from Google APIs adheres to the <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>, including the Limited Use requirements.</p>
+</main>
+</body>
+</html>
