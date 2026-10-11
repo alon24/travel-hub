@@ -55,14 +55,14 @@ jobs:
           BASE_PATH: /${{ github.event.repository.name }}/
           # Public config: Settings → Secrets and variables → Actions → Variables. Empty = AI features hidden.
           VITE_WORKER_URL: ${{ vars.VITE_WORKER_URL }}
-          # Google sign-in gate (same OAuth client as MyMaps AI) and who may use the hub (sha256 hashes)
+          # Google sign-in gate (same OAuth client as MyMaps AI). Who may come in is the Worker's shared user list.
           VITE_GOOGLE_CLIENT_ID: ${{ vars.VITE_GOOGLE_CLIENT_ID }}
-          VITE_ALLOWED_EMAILS: ${{ vars.VITE_ALLOWED_EMAILS }}
-      # Without these the hub would ship with no sign-in gate, or open to any Google account
+      # Without these the hub would ship with no sign-in gate, or let any Google account in
       - name: Check the sign-in gate is in the bundle
         run: |
           test -n "${{ vars.VITE_GOOGLE_CLIENT_ID }}" || { echo "::error::VITE_GOOGLE_CLIENT_ID variable is not set"; exit 1; }
-          test -n "${{ vars.VITE_ALLOWED_EMAILS }}" || { echo "::error::VITE_ALLOWED_EMAILS variable is not set"; exit 1; }
+          test -n "${{ vars.VITE_WORKER_URL }}" || { echo "::error::VITE_WORKER_URL variable is not set"; exit 1; }
+          grep -rq "${{ vars.VITE_WORKER_URL }}" dist/assets || { echo "::error::Worker URL missing from the build"; exit 1; }
           grep -rq "${{ vars.VITE_GOOGLE_CLIENT_ID }}" dist/assets || { echo "::error::Google client id missing from the build"; exit 1; }
       - uses: actions/upload-pages-artifact@v3
         with:
