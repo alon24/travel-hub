@@ -244,15 +244,20 @@ export function removeStay(trip: Trip, id: string, now = new Date()): Trip {
 export const adultsOf = (t: Pick<Trip, 'travelers'>): number => t.travelers.filter((p) => p.kind === 'adult').length
 export const childAges = (t: Pick<Trip, 'travelers'>): number[] => t.travelers.filter((p) => p.kind === 'child').map((p) => p.age ?? 8)
 
+/** A Booking.com search for `query` (a city, or one hotel and its city) with the dates and group filled in. */
+export function bookingUrl(trip: Pick<Trip, 'travelers'>, query: string, checkIn: IsoDate, checkOut: IsoDate): string {
+  const kids = childAges(trip)
+  const booking = new URLSearchParams({ ss: query, checkin: checkIn, checkout: checkOut, group_adults: String(adultsOf(trip)), group_children: String(kids.length), no_rooms: '1' })
+  kids.forEach((a) => booking.append('age', String(a)))
+  return `https://www.booking.com/searchresults.html?${booking}`
+}
+
 /** Hotel and apartment searches with the city, dates and group size already filled in. */
 export function staySearchLinks(trip: Pick<Trip, 'travelers'>, d: Pick<Destination, 'name'>, checkIn: IsoDate, checkOut: IsoDate): { name: string; url: string }[] {
-  const adults = adultsOf(trip)
   const kids = childAges(trip)
-  const booking = new URLSearchParams({ ss: d.name, checkin: checkIn, checkout: checkOut, group_adults: String(adults), group_children: String(kids.length), no_rooms: '1' })
-  kids.forEach((a) => booking.append('age', String(a)))
-  const airbnb = new URLSearchParams({ checkin: checkIn, checkout: checkOut, adults: String(adults), ...(kids.length ? { children: String(kids.length) } : {}) })
+  const airbnb = new URLSearchParams({ checkin: checkIn, checkout: checkOut, adults: String(adultsOf(trip)), ...(kids.length ? { children: String(kids.length) } : {}) })
   return [
-    { name: 'Booking.com', url: `https://www.booking.com/searchresults.html?${booking}` },
+    { name: 'Booking.com', url: bookingUrl(trip, d.name, checkIn, checkOut) },
     { name: 'Airbnb', url: `https://www.airbnb.com/s/${encodeURIComponent(d.name)}/homes?${airbnb}` },
   ]
 }

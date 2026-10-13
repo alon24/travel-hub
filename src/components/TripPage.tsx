@@ -1,9 +1,10 @@
-import { useState, type FormEvent, type ReactNode } from 'react'
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { airport } from '../data/airports.ts'
 import { geocode } from '../lib/geocode.ts'
+import { findHotels, type Hotel, type HotelKind } from '../lib/hotels.ts'
 import { hubUrl, MYMAPS_URL, SKYHOP_URL } from '../links.ts'
 import { mapDocFromTrip, mymapsImportUrl } from '../model/mymaps.ts'
-import { addStay, adultsOf, flightTotal, removeStay, skyhopSearchUrl, stayCoverage, staySearchLinks, stayTotal, type Coverage } from '../model/plan.ts'
+import { addStay, adultsOf, bookingUrl, flightTotal, removeStay, skyhopSearchUrl, stayCoverage, staySearchLinks, stayTotal, type Coverage } from '../model/plan.ts'
 import { dayLabel, tripNights } from '../model/trip.ts'
 import type { FlightLeg, Trip } from '../model/types.ts'
 import { TripPass } from './TripPass.tsx'
@@ -15,6 +16,8 @@ interface Props {
   /** Leaves the page (Skyhop, MyMaps). Injectable for tests. */
   navigate?: (url: string) => void
   geocoder?: typeof geocode
+  /** Places to sleep near each city's center (OpenStreetMap); injectable for tests */
+  hotelFinder?: typeof findHotels
   /** Planning it with friends (TripShare); only when signed in to Drive */
   share?: ReactNode
 }
@@ -25,7 +28,7 @@ const money = (n: number, currency = 'ILS') => new Intl.NumberFormat('en-GB', { 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
 
 /** Everything about one trip, with the next step always one tap away. */
-export function TripPage({ trip, onChange, onDelete, navigate = (u) => window.location.assign(u), geocoder = geocode, share }: Props) {
+export function TripPage({ trip, onChange, onDelete, navigate = (u) => window.location.assign(u), geocoder = geocode, hotelFinder = findHotels, share }: Props) {
   const coverage = stayCoverage(trip)
   const openNights = coverage.reduce((n, c) => n + c.open.length, 0)
   const currency = trip.budget?.currency ?? 'ILS'
@@ -81,7 +84,7 @@ export function TripPage({ trip, onChange, onDelete, navigate = (u) => window.lo
               <span className={`chip src ${openNights ? '' : 'ok'}`}>{openNights ? `${plural(openNights, 'night')} open` : 'Every night covered'}</span>
             </h2>
             {coverage.map((c) => (
-              <StayRow key={c.destination.id} trip={trip} c={c} geocoder={geocoder} onChange={onChange} />
+              <StayRow key={c.destination.id} trip={trip} c={c} geocoder={geocoder} hotelFinder={hotelFinder} onChange={onChange} />
             ))}
           </section>
 
@@ -136,8 +139,11 @@ function Leg({ f }: { f: FlightLeg }) {
   )
 }
 
-function StayRow({ trip, c, onChange, geocoder }: { trip: Trip; c: Coverage; onChange: (t: Trip) => void; geocoder: typeof geocode }) {
+function StayRow({ trip, c, onChange, geocoder, hotelFinder }: { trip: Trip; c: Coverage; onChange: (t: Trip) => void; geocoder: typeof geocode; hotelFinder: typeof findHotels }) {
   const [open, setOpen] = useState(false)
+  const [browsing, setBrowsing] = useState(false)
+  /** The hotel picked from the list: its OSM position is used as is, no geocoding */
+  const [picked, setPicked] = useState<Hotel | null>(null)
   const [name, setName] = useState('')
   const [price, setPrice] = useState('')
   const [url, setUrl] = useState('')
@@ -150,7 +156,7 @@ function StayRow({ trip, c, onChange, geocoder }: { trip: Trip; c: Coverage; onC
     if (!c.gap || !name.trim()) return
     setBusy(true)
     const near = c.destination.airport ? airport(c.destination.airport)?.location : undefined
-    const location = await geocoder(`${name.trim()}, ${c.destination.name}`, near)
+    const location = picked && picked.name === name.trim() ? picked.location : await geocoder(`${name.trim()}, ${c.destination.name}`, near)
     const link = /^https?:\/\//.test(url.trim()) ? url.trim() : undefined
     onChange(
       addStay(trip, {
@@ -165,6 +171,7 @@ function StayRow({ trip, c, onChange, geocoder }: { trip: Trip; c: Coverage; onC
     )
     setBusy(false)
     setOpen(false)
+    setPicked(null)
     setName('')
     setPrice('')
     setUrl('')
@@ -189,8 +196,24 @@ function StayRow({ trip, c, onChange, geocoder }: { trip: Trip; c: Coverage; onC
           {staySearchLinks(trip, c.destination, c.gap.checkIn, c.gap.checkOut).map((l) => (
             <a key={l.name} className="btn small" href={l.url} target="_blank" rel="noopener">{l.name} ↗</a>
           ))}
+          <button type="button" className="btn small" aria-expanded={browsing} onClick={() => setBrowsing(!browsing)}>🔎 Hotels in {c.destination.name}</button>
           {!open && <button type="button" className="btn small solid" onClick={() => setOpen(true)}>＋ Add the place you booked</button>}
         </div>
+      )}
+      {browsing && c.gap && (
+        <HotelList
+          city={c.destination.name}
+          near={c.destination.airport ? airport(c.destination.airport)?.location : undefined}
+          finder={hotelFinder}
+          priceUrl={(h) => bookingUrl(trip, `${h.name}, ${c.destination.name}`, c.gap!.checkIn, c.gap!.checkOut)}
+          onUse={(h) => {
+            setPicked(h)
+            setName(h.name)
+            setUrl(h.website ?? bookingUrl(trip, `${h.name}, ${c.destination.name}`, c.gap!.checkIn, c.gap!.checkOut))
+            setBrowsing(false)
+            setOpen(true)
+          }}
+        />
       )}
       {open && c.gap && (
         <form className="stay-form" onSubmit={save} aria-label={`Stay in ${c.destination.name}`}>
@@ -200,6 +223,73 @@ function StayRow({ trip, c, onChange, geocoder }: { trip: Trip; c: Coverage; onC
           <button type="submit" className="btn small solid" disabled={busy}>{busy ? 'Saving…' : 'Save stay'}</button>
           <button type="button" className="btn small" onClick={() => setOpen(false)}>Cancel</button>
         </form>
+      )}
+    </div>
+  )
+}
+
+const KIND_LABEL: Record<HotelKind, string> = { hotel: 'Hotel', guest_house: 'Guest house', hostel: 'Hostel', apartment: 'Apartment' }
+
+/** Places to sleep near the center, from OpenStreetMap. Prices live on Booking.com, one tap away per hotel. */
+function HotelList({ city, near, finder, priceUrl, onUse }: {
+  city: string
+  near?: [number, number]
+  finder: typeof findHotels
+  priceUrl: (h: Hotel) => string
+  onUse: (h: Hotel) => void
+}) {
+  const [hotels, setHotels] = useState<Hotel[] | null>(null)
+  const [error, setError] = useState('')
+  const [kind, setKind] = useState<HotelKind | 'all'>('all')
+  const [tries, setTries] = useState(0)
+  useEffect(() => {
+    let alive = true
+    setError('')
+    finder(city, near).then(
+      (h) => alive && setHotels(h),
+      (e: unknown) => alive && setError(e instanceof Error ? e.message : "Couldn't load hotels."),
+    )
+    return () => { alive = false }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [city, tries])
+
+  const kinds = hotels ? (Object.keys(KIND_LABEL) as HotelKind[]).filter((k) => hotels.some((h) => h.kind === k)) : []
+  const shown = (hotels ?? []).filter((h) => kind === 'all' || h.kind === kind)
+  return (
+    <div className="hotels" role="region" aria-label={`Hotels in ${city}`}>
+      {error ? (
+        <p className="hint" role="alert">{error} <button type="button" className="btn small" onClick={() => setTries(tries + 1)}>Try again</button></p>
+      ) : !hotels ? (
+        <p className="hint" role="status">Finding places to sleep near the center of {city}…</p>
+      ) : !hotels.length ? (
+        <p className="hint">OpenStreetMap has no hotels listed near the center of {city}. Try Booking.com above.</p>
+      ) : (
+        <>
+          {kinds.length > 1 && (
+            <div className="kinds" role="group" aria-label="Kind of place">
+              {(['all', ...kinds] as const).map((k) => (
+                <button key={k} type="button" className={`chip ${kind === k ? 'on' : ''}`} aria-pressed={kind === k} onClick={() => setKind(k)}>
+                  {k === 'all' ? 'All' : `${KIND_LABEL[k]}s`}
+                </button>
+              ))}
+            </div>
+          )}
+          <ul aria-label={`Places to sleep in ${city}`}>
+            {shown.map((h) => (
+              <li key={h.id}>
+                <span className="h-name">
+                  <b>{h.name}</b>
+                  <span className="hint">{KIND_LABEL[h.kind]}{h.stars ? ` · ${'★'.repeat(Math.round(h.stars))}` : ''} · <span className="mono">{h.km} km</span> from the center</span>
+                </span>
+                <span className="h-actions">
+                  <a className="btn small" href={priceUrl(h)} target="_blank" rel="noopener" aria-label={`Prices for ${h.name}`}>Prices ↗</a>
+                  <button type="button" className="btn small solid" aria-label={`Use ${h.name}`} onClick={() => onUse(h)}>Use</button>
+                </span>
+              </li>
+            ))}
+          </ul>
+          <p className="hint small">Hotels from © OpenStreetMap contributors. Prices and rooms on Booking.com.</p>
+        </>
       )}
     </div>
   )
