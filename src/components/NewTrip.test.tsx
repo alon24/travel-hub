@@ -26,6 +26,23 @@ describe('NewTrip: describe it and the AI fills in the form', () => {
     expect(trip.travelers).toHaveLength(3)
   })
 
+  it('keeps the nights you gave each city ("3 in Lisbon, 4 in Porto"), until you change the nights or cities', async () => {
+    const onCreate = vi.fn()
+    const draft = vi.fn().mockResolvedValue({ home: 'TLV', places: ['LIS', 'OPO'], start: '2026-11-18', nights: 7, split: [3, 4], unknown: [] })
+    render(<NewTrip onCreate={onCreate} draft={draft} today="2026-10-11" />)
+    await userEvent.type(screen.getByLabelText(/Describe it/), 'Portugal 3,4 nights{Enter}')
+    expect(await screen.findByRole('status')).toHaveTextContent('Lisbon 3 nights, Porto 4 nights.')
+    expect(screen.getByLabelText('Nights')).toHaveValue(7)
+    await userEvent.click(screen.getByRole('button', { name: /Create trip/ }))
+    const trip = onCreate.mock.calls[0]![0] as Trip
+    expect(trip.destinations.map((d) => [d.airport, d.arrive, d.depart])).toEqual([['LIS', '2026-11-18', '2026-11-21'], ['OPO', '2026-11-21', '2026-11-25']])
+
+    await userEvent.click(screen.getByRole('button', { name: 'More nights' }))   // your change wins: split evenly again
+    await userEvent.click(screen.getByRole('button', { name: /Create trip/ }))
+    const again = onCreate.mock.calls[1]![0] as Trip
+    expect(again.destinations.map((d) => d.depart)).toEqual(['2026-11-22', '2026-11-26'])
+  })
+
   it('says which places it could not match, and shows AI errors without losing the form', async () => {
     const draft = vi.fn()
       .mockResolvedValueOnce({ places: ['LIS'], unknown: ['Sintra'] })

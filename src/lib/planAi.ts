@@ -15,6 +15,8 @@ export interface TripDraft {
   places: string[]
   start?: string
   nights?: number
+  /** Nights in each of `places`, when the user gave them per city; they add up to `nights` */
+  split?: number[]
   adults?: number
   /** Places the AI named that we have no airport for; shown so nothing is dropped silently */
   unknown: string[]
@@ -26,6 +28,7 @@ const Reply = z.object({
   to: z.array(z.string().max(60)).max(8).catch([]),
   start: z.iso.date().optional().catch(undefined),
   nights: z.number().int().min(1).max(30).optional().catch(undefined),
+  split: z.array(z.number().int().min(1).max(30)).max(8).optional().catch(undefined),
   adults: z.number().int().min(1).max(9).optional().catch(undefined),
 })
 
@@ -33,9 +36,11 @@ const Reply = z.object({
 const CITIES = AIRPORTS.map((a) => `${a.code} ${a.city}`).join(', ')
 
 export const planSystem = (today: string) =>
-  `Turn the user's trip wish into JSON only, no prose: {"title"?:string,"from"?:IATA,"to":IATA[],"start"?:"YYYY-MM-DD","nights"?:int,"adults"?:int}. ` +
+  `Turn the user's trip wish into JSON only, no prose: {"title"?:string,"from"?:IATA,"to":IATA[],"start"?:"YYYY-MM-DD","nights"?:int,"split"?:int[],"adults"?:int}. ` +
   `Today is ${today}. "to" is the cities in travel order. A country means its main cities (Portugal → LIS, OPO). ` +
   `A month without a day means a date in that month, after today. Leave out anything the user didn't say. ` +
+  `"split" is nights per city in "to" order, only when the user gives one number per city ("3,4 nights" for 2 cities = [3,4]). ` +
+  `A range like "3-4 nights" for the whole trip means the larger number. ` +
   `Prefer these airports: ${CITIES}.`
 
 /** The model's answer → a draft for the form. Throws only when there's no usable JSON at all. */
@@ -55,10 +60,12 @@ export function readPlanReply(content: string, today: string): TripDraft {
     if (!a) unknown.push(t)
     else if (!places.includes(a.code)) places.push(a.code)
   }
+  // A split counts only when it lines up one-to-one with the cities we kept
+  const split = r.split && r.split.length === r.to.length && r.split.length === places.length ? r.split : undefined
   const home = r.from ? findAirport(r.from)?.code : undefined
   // A date in the past would be refused by the form; keep the form's own default instead
   const start = r.start && r.start >= addDays(today, 1) ? r.start : undefined
-  return { title: r.title?.trim() || undefined, home, places, start, nights: r.nights, adults: r.adults, unknown }
+  return { title: r.title?.trim() || undefined, home, places, start, nights: split ? split.reduce((a, b) => a + b, 0) : r.nights, adults: r.adults, unknown, split }
 }
 
 export async function draftTrip(text: string, today: string, auth: AiAuth, e?: Env): Promise<TripDraft> {

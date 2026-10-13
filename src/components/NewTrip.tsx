@@ -21,6 +21,8 @@ export function NewTrip({ onCreate, draft, today = new Date().toISOString().slic
   const [place, setPlace] = useState('')
   const [start, setStart] = useState(defaultStart(today))
   const [nights, setNights] = useState(3)
+  // Nights per city from the AI; dropped as soon as you change the nights or the cities
+  const [split, setSplit] = useState<number[]>()
   const [adults, setAdults] = useState(2)
   const [title, setTitle] = useState('')
   const [error, setError] = useState('')
@@ -39,11 +41,13 @@ export function NewTrip({ onCreate, draft, today = new Date().toISOString().slic
       if (d.home) setFrom(`${findAirport(d.home)?.city} (${d.home})`)
       if (d.start) setStart(d.start)
       if (d.nights) setNights(d.nights)
+      setSplit(d.split)
       if (d.adults) setAdults(d.adults)
       if (d.title) setTitle(d.title)
       setError('')
       setNote(
         (d.places.length ? 'Filled in. Check it, then create the trip.' : "Couldn't tell where you're going. Add a city below.") +
+          (d.split ? ` ${d.places.map((c, i) => `${findAirport(c)?.city ?? c} ${d.split![i]} nights`).join(', ')}.` : '') +
           (d.unknown.length ? ` Not in our city list yet: ${d.unknown.join(', ')}.` : ''),
       )
     } catch (e) {
@@ -60,6 +64,7 @@ export function NewTrip({ onCreate, draft, today = new Date().toISOString().slic
     // A country adds all its airports, so every one of them is searched; remove the ones you don't want
     const codes = a ? [a.code] : country!.airports.map((x) => x.code)
     setPlaces([...places, ...codes.filter((c) => !places.includes(c))])
+    setSplit(undefined)
     setPlace('')
     setError('')
   }
@@ -70,7 +75,7 @@ export function NewTrip({ onCreate, draft, today = new Date().toISOString().slic
     if (place.trim()) return addPlace()
     if (!home) return setError('Where do you fly from? Pick a city or airport code.')
     if (!places.length) return setError('Add at least one place to go.')
-    onCreate(createTrip({ title, home: home.code, destinations: places.map((code) => ({ code })), startDate: start, nights, adults }))
+    onCreate(createTrip({ title, home: home.code, destinations: places.map((code, i) => ({ code, nights: split?.[i] })), startDate: start, nights, adults }))
   }
 
   return (
@@ -109,7 +114,7 @@ export function NewTrip({ onCreate, draft, today = new Date().toISOString().slic
           {places.map((code) => (
             <span key={code} className="place-chip">
               {findAirport(code)?.city} <b className="mono">{code}</b>
-              <button type="button" aria-label={`Remove ${code}`} onClick={() => setPlaces(places.filter((p) => p !== code))}>×</button>
+              <button type="button" aria-label={`Remove ${code}`} onClick={() => { setPlaces(places.filter((p) => p !== code)); setSplit(undefined) }}>×</button>
             </span>
           ))}
           <input
@@ -143,7 +148,7 @@ export function NewTrip({ onCreate, draft, today = new Date().toISOString().slic
         </div>
       </div>
       <div className="row">
-        <Stepper id="nt-nights" label="Nights" value={nights} min={1} max={30} onChange={setNights} />
+        <Stepper id="nt-nights" label="Nights" value={nights} min={1} max={30} onChange={(n) => { setNights(n); setSplit(undefined) }} />
         <Stepper id="nt-adults" label="Travelers" value={adults} min={1} max={9} onChange={setAdults} />
       </div>
       <div className="field">
