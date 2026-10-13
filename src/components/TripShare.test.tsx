@@ -18,7 +18,7 @@ describe('TripShare: plan it together', () => {
     window.location.hash = '#/'
   })
 
-  it('invites a friend by email: they can edit the trip, and the email links to it in the hub', async () => {
+  it('gives a friend access by email, then hands you an invite link to send: no Google email with a file', async () => {
     const t = saveTrip(portugal())
     await syncTrips({ token: 'tok', fetch: drive.fetch })
     const addUser = vi.fn().mockResolvedValue({})
@@ -28,11 +28,16 @@ describe('TripShare: plan it together', () => {
     await userEvent.type(screen.getByLabelText("Friend's email"), 'Dana@Gmail.com')
     await userEvent.click(screen.getByRole('button', { name: 'Invite' }))
 
-    expect(await screen.findByRole('status')).toHaveTextContent('Invited dana@gmail.com. Google emailed them a link to the trip. They can sign in to the apps now.')
+    expect(await screen.findByRole('status')).toHaveTextContent('dana@gmail.com can open this trip now. Send them the invite link. They can sign in to the apps now.')
     expect(screen.getByRole('list', { name: 'People on this trip' })).toHaveTextContent('dana@gmail.com')
     const [fileId] = [...drive.files].find(([, f]) => f.appProperties.tripId === t.id)!
     expect(drive.files.get(fileId)!.permissions!.at(-1)).toMatchObject({ role: 'writer', emailAddress: 'dana@gmail.com' })
-    expect(drive.invites.get('dana@gmail.com')).toMatch(new RegExp(`Ilan invited you to plan "Portugal with the guys" together.*#/shared/${fileId}$`))
+    expect(drive.invites.get('dana@gmail.com')).toEqual({ googleEmail: false })
+    const invite = screen.getByRole('group', { name: 'Invite for dana@gmail.com' })
+    expect(invite.querySelector('code')).toHaveTextContent(new RegExp(`#/shared/${fileId}$`))
+    const wa = new URL(screen.getByRole('link', { name: 'WhatsApp' }).getAttribute('href')!)
+    expect(wa.searchParams.get('text')).toMatch(new RegExp(`^Ilan invited you to plan "Portugal with the guys" together: http.*#/shared/${fileId}$`))
+    expect(drive.files.get(fileId)!.name).toBe('Portugal with the guys · Travel Hub trip')
     expect(addUser).toHaveBeenCalledWith('dana@gmail.com')
   })
 

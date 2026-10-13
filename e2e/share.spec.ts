@@ -7,7 +7,7 @@ test.beforeEach(async ({ page }) => {
   await page.route(/fonts\.(googleapis|gstatic)/, (r) => r.abort())
 })
 
-test('invite a friend to a trip: Google emails them a link that opens it in the hub', async ({ page }) => {
+test('invite a friend to a trip: you get a link to send them that opens it in their hub', async ({ page }) => {
   const drive = await signIn(page)
   await page.getByRole('link', { name: 'Plan a trip' }).first().click()
   await page.getByLabel('Where to').fill('Lisbon')
@@ -19,9 +19,11 @@ test('invite a friend to a trip: Google emails them a link that opens it in the 
   await expect(share.getByText(ALLOWED_EMAIL)).toBeVisible()
   await share.getByLabel("Friend's email").fill('dana@gmail.com')
   await share.getByRole('button', { name: 'Invite' }).click()
-  await expect(share.getByRole('status')).toContainText('Invited dana@gmail.com')
+  await expect(share.getByRole('status')).toContainText('dana@gmail.com can open this trip now')
   await expect(share.getByRole('list', { name: 'People on this trip' })).toContainText('dana@gmail.com')
-  expect(drive.invites.get('dana@gmail.com')).toMatch(/#\/shared\/f\d+$/)
+  await expect(share.getByRole('group', { name: 'Invite for dana@gmail.com' }).locator('code')).toHaveText(/#\/shared\/f\d+$/)
+  await expect(share.getByRole('link', { name: 'WhatsApp' })).toHaveAttribute('href', /wa\.me.*shared/)
+  expect(drive.invites.get('dana@gmail.com')).toEqual({ googleEmail: false })
 })
 
 test("open a friend's invite: pick it once in Google's window and it joins your trips", async ({ page }) => {

@@ -4,7 +4,7 @@ import type { Trip } from '../model/types.ts'
 /**
  * Trips in Google Drive, so the same trips show on every device you sign in on.
  * Scope drive.file (same OAuth client as MyMaps AI): the hub sees only the files it created.
- * One `<title>.trip.json` per trip in a "Travel Hub" folder, tagged with the trip id and its updatedAt,
+ * One JSON file per trip (named `<title> · Travel Hub trip`) in a "Travel Hub" folder, tagged with the trip id and its updatedAt,
  * so a sync can compare without downloading every file.
  */
 export const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file'
@@ -92,7 +92,8 @@ function multipart(meta: object, trip: Trip): { body: string; type: string } {
   }
 }
 
-const fileName = (t: Trip) => `${t.title.replace(/[\\/]/g, '_') || 'Trip'}.trip.json`
+// What people see in Drive and in the Picker: the trip's name, not a file format
+const fileName = (t: Trip) => `${t.title.replace(/[\\/]/g, '_') || 'Trip'} · Travel Hub trip`
 const props = (t: Trip) => ({ app: APP, kind: 'trip', tripId: t.id, updatedAt: t.updatedAt })
 
 /** Creates the trip's file, or replaces the content of `fileId`. */
@@ -130,10 +131,12 @@ export async function listPeople(ctx: DriveCtx, fileId: string): Promise<Person[
     .sort((a, b) => Number(b.role === 'owner') - Number(a.role === 'owner'))
 }
 
-/** Lets a friend edit the trip. Google emails them our message, which carries the link that opens it in the hub. */
-export async function shareTrip(ctx: DriveCtx, fileId: string, email: string, message: string): Promise<void> {
-  const params = new URLSearchParams({ sendNotificationEmail: 'true', emailMessage: message })
-  await call(ctx, `${API}/files/${encodeURIComponent(fileId)}/permissions?${params}`, {
+/**
+ * Lets a friend edit the trip. No Google email: that would hand them a raw file. The hub gives you
+ * an invite link to send instead (TripShare), which opens the trip in their hub.
+ */
+export async function shareTrip(ctx: DriveCtx, fileId: string, email: string): Promise<void> {
+  await call(ctx, `${API}/files/${encodeURIComponent(fileId)}/permissions?sendNotificationEmail=false`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ type: 'user', role: 'writer', emailAddress: email.trim().toLowerCase() }),

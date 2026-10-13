@@ -274,5 +274,8 @@ input:focus-visible,textarea:focus-visible{outline:2px solid var(--sky);outline-
 .people .who{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .invite{display:flex;gap:8px}
 .invite input{flex:1}
+.invite-link{display:grid;gap:8px;padding:12px;border:1.5px dashed var(--amber);border-radius:12px}
+.invite-link code{font-size:.78rem;overflow-wrap:anywhere;color:var(--muted)}
+.row-btns{display:flex;flex-wrap:wrap;gap:8px}
 .shared p{max-width:52ch}
 .shared .btn{margin-right:8px}

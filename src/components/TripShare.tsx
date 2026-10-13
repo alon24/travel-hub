@@ -25,6 +25,7 @@ export function TripShare({ ctx, tripId, title, from, addUser, synced }: Props) 
   const [email, setEmail] = useState('')
   const [busy, setBusy] = useState(false)
   const [note, setNote] = useState('')
+  const [invited, setInvited] = useState('')
 
   const load = async () => {
     try {
@@ -52,7 +53,7 @@ export function TripShare({ ctx, tripId, title, from, addUser, synced }: Props) 
     setBusy(true)
     setNote('')
     try {
-      await shareTrip(ctx, file.id, who, `${from} invited you to plan "${title}" together. Open it in Travel Hub: ${sharedLink(file.id)}`)
+      await shareTrip(ctx, file.id, who)
       let access = ' They need to be on the apps’ user list to open it; ask an admin to add them.'
       if (addUser) {
         try {
@@ -63,7 +64,8 @@ export function TripShare({ ctx, tripId, title, from, addUser, synced }: Props) 
         }
       }
       setEmail('')
-      setNote(`Invited ${who}. Google emailed them a link to the trip.${access}`)
+      setInvited(who)
+      setNote(`${who} can open this trip now. Send them the invite link.${access}`)
       setPeople(await listPeople(ctx, file.id))
     } catch (e) {
       setNote(e instanceof Error ? e.message : 'Could not share the trip.')
@@ -105,8 +107,33 @@ export function TripShare({ ctx, tripId, title, from, addUser, synced }: Props) 
           <button type="submit" className="btn" disabled={busy || file === undefined}>{busy ? 'Inviting…' : 'Invite'}</button>
         </form>
       )}
+      {file && invited && <InviteLink text={`${from} invited you to plan "${title}" together: ${sharedLink(file.id)}`} to={invited} />}
       {file?.mine === false && <p className="hint">A friend shared this trip with you. Your changes reach them too.</p>}
       {note ? <p className="hint" role="status">{note}</p> : file?.mine !== false && <p className="hint">They can see and edit this trip: flights, stays and days.</p>}
     </section>
+  )
+}
+
+/** The invite itself: a link that opens the trip in the friend's hub, sent however you talk to them. */
+function InviteLink({ text, to }: { text: string; to: string }) {
+  const [copied, setCopied] = useState(false)
+  const nativeShare = typeof navigator !== 'undefined' && 'share' in navigator
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopied(true)
+    } catch {
+      /* no clipboard: the link is on screen to copy by hand */
+    }
+  }
+  return (
+    <div className="invite-link" role="group" aria-label={`Invite for ${to}`}>
+      <code className="mono">{text.slice(text.lastIndexOf("http"))}</code>
+      <div className="row-btns">
+        {nativeShare && <button type="button" className="btn small solid" onClick={() => void navigator.share({ text }).catch(() => undefined)}>Send invite</button>}
+        <a className="btn small" href={`https://wa.me/?text=${encodeURIComponent(text)}`} target="_blank" rel="noreferrer">WhatsApp</a>
+        <button type="button" className="btn small" onClick={() => void copy()}>{copied ? 'Copied' : 'Copy link'}</button>
+      </div>
+    </div>
   )
 }

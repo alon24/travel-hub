@@ -28,8 +28,8 @@ interface FakeFile {
 export class FakeDrive {
   files = new Map<string, FakeFile>()
   calls: string[] = []
-  /** The emailMessage of each invite, by address */
-  invites = new Map<string, string>()
+  /** Each invite, by address: whether Google was asked to email them about the file */
+  invites = new Map<string, { googleEmail: boolean }>()
   private n = 0
 
   constructor(readonly token = 'tok', readonly me = 'me@example.com') {}
@@ -50,7 +50,7 @@ export class FakeDrive {
       if (method === 'POST') {
         const body = JSON.parse(String(init.body))
         perms.push({ id: `p${perms.length}`, type: 'user', role: body.role, emailAddress: body.emailAddress })
-        this.invites.set(body.emailAddress, url.searchParams.get('emailMessage') ?? '')
+        this.invites.set(body.emailAddress, { googleEmail: url.searchParams.get('sendNotificationEmail') !== 'false' })
         return json({ id: `p${perms.length - 1}` })
       }
       if (method === 'DELETE') {

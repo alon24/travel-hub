@@ -15,7 +15,7 @@ One place to plan a vacation. The landing page for the travel apps, and the home
 
 Trips are kept in this browser and, once you sign in, in a "Travel Hub" folder in your Google Drive, so your phone and computer show the same trips (the top bar says **☁ In Drive**). All three apps share the `alon24.github.io` origin.
 
-**Plan it together:** on a trip, type a friend's email under *Plan it together*. Google emails them a link; they sign in, confirm the trip once in Google's file window, and from then on you both see and edit the same trip. Only you can delete it; if they delete it, it just leaves their list. (The hub needs the GitHub variable `VITE_GOOGLE_API_KEY`, the same browser key as MyMaps AI, for that file window. Friends must be on the apps' user list; when an admin shares, they are added.)
+**Plan it together:** on a trip, type a friend's email under *Plan it together*, then send them the invite link it shows (WhatsApp, your phone's share sheet, or copy). They open the link, sign in, confirm the trip once in Google's file window, and from then on you both see and edit the same trip. Only you can delete it; if they delete it, it just leaves their list. (The hub needs the GitHub variable `VITE_GOOGLE_API_KEY`, the same browser key as MyMaps AI, for that file window. Friends must be on the apps' user list; when an admin shares, they are added.)
 
 Built and deployed the same way as MyMaps AI: React + TypeScript + Vite + vite-plugin-pwa, deployed to GitHub Pages by `.github/workflows/deploy.yml` on every push to `main`.
 
