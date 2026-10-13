@@ -54,7 +54,8 @@ export function buildDays(trip: Pick<Trip, 'startDate' | 'endDate' | 'destinatio
 export interface NewTripInput {
   title?: string
   home: string
-  destinations: { code: string; name?: string }[]
+  /** `nights` per city is used when they add up to the trip's nights; otherwise they're split evenly */
+  destinations: { code: string; name?: string; nights?: number }[]
   startDate: IsoDate
   nights: number
   adults: number
@@ -72,11 +73,12 @@ export function makeTravelers(adults: number, childrenAges: number[] = [], keep:
 
 export function createTrip(input: NewTripInput, now = new Date()): Trip {
   const endDate = addDays(input.startDate, input.nights)
-  const destinations = splitDestinations(
-    input.destinations.map((d) => ({ id: newId('d'), name: d.name ?? cityName(d.code), airport: d.code, country: airport(d.code)?.country })),
-    input.startDate,
-    endDate,
-  )
+  const dests = input.destinations.map((d) => ({ id: newId('d'), name: d.name ?? cityName(d.code), airport: d.code, country: airport(d.code)?.country }))
+  const own = input.destinations.map((d) => d.nights ?? 0)
+  let at = input.startDate
+  const destinations = own.every((n) => n > 0) && own.reduce((a, b) => a + b, 0) === input.nights
+    ? dests.map((d, i) => ({ ...d, arrive: at, depart: (at = addDays(at, own[i]!)) }))
+    : splitDestinations(dests, input.startDate, endDate)
   const names = destinations.map((d) => d.name)
   const base: Trip = {
     schema: TRIP_SCHEMA_VERSION,

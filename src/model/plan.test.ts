@@ -130,3 +130,13 @@ describe('buildDays', () => {
     expect(days[0].title).toBe('Fly to Lisbon')
   })
 })
+
+describe('createTrip with nights per city', () => {
+  it('uses them when they add up to the trip, else splits evenly', () => {
+    const t = createTrip({ home: 'TLV', destinations: [{ code: 'LIS', nights: 3 }, { code: 'OPO', nights: 4 }], startDate: '2026-11-18', nights: 7, adults: 2 })
+    expect(t.destinations.map((d) => [d.arrive, d.depart])).toEqual([['2026-11-18', '2026-11-21'], ['2026-11-21', '2026-11-25']])
+    expect(t.endDate).toBe('2026-11-25')
+    const odd = createTrip({ home: 'TLV', destinations: [{ code: 'LIS', nights: 3 }, { code: 'OPO', nights: 4 }], startDate: '2026-11-18', nights: 6, adults: 2 })
+    expect(odd.destinations.map((d) => d.depart)).toEqual(['2026-11-21', '2026-11-24'])
+  })
+})
