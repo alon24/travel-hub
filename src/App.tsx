@@ -9,6 +9,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { AdminPage } from './components/AdminPage.tsx'
 import { NewTrip } from './components/NewTrip.tsx'
 import { TripPage } from './components/TripPage.tsx'
+import { TripShare } from './components/TripShare.tsx'
+import { SharedTrip } from './components/SharedTrip.tsx'
+import { pickFile } from './auth/picker.ts'
 import { TripsList } from './components/TripsList.tsx'
 import { GITHUB_URL, MYMAPS_URL, SKYHOP_URL } from './links.ts'
 import { AccountApi, type Role } from './lib/account.ts'
@@ -16,7 +19,7 @@ import { aiEnabled } from './lib/ai.ts'
 import { draftTrip } from './lib/planAi.ts'
 import { env } from './env.ts'
 import { go, useRoute } from './lib/route.ts'
-import { deleteTrip, getTrip, listTrips, onTripsChange, saveTrip } from './lib/tripStore.ts'
+import { deleteTrip, forgetDeleted, getTrip, listTrips, onTripsChange, putTrips, saveTrip } from './lib/tripStore.ts'
 import { useTripSync } from './lib/useTripSync.ts'
 import { readHandoff } from './model/handoff.ts'
 import { applyFlights } from './model/plan.ts'
@@ -109,6 +112,8 @@ export default function App({ account, onSignOut, driveFetch }: Props = {}) {
   const isAdmin = account?.role === 'admin' && Boolean(account.token) && Boolean(env.VITE_WORKER_URL)
   const token = account?.token
   const adminApi = useMemo(() => (isAdmin && token ? new AccountApi(env.VITE_WORKER_URL, token) : null), [isAdmin, token])
+  const drive = useMemo(() => (token ? { token, fetch: driveFetch } : null), [token, driveFetch])
+  const pick = token && env.VITE_GOOGLE_API_KEY ? (id: string) => pickFile(id, token, env.VITE_GOOGLE_API_KEY, env.VITE_GOOGLE_CLIENT_ID) : undefined
   return (
     <div className="wrap">
       <header className="bar">
@@ -148,9 +153,20 @@ export default function App({ account, onSignOut, driveFetch }: Props = {}) {
             />
           </section>
         ) : route.name === 'trip' && trip ? (
-          <TripPage trip={trip} onChange={saveTrip} onDelete={() => { deleteTrip(trip.id); go('#/') }} />
+          <TripPage
+            trip={trip}
+            onChange={saveTrip}
+            onDelete={() => { deleteTrip(trip.id); go('#/') }}
+            share={drive && account ? (
+              <TripShare ctx={drive} tripId={trip.id} title={trip.title} from={account.name ?? account.email} synced={sync.kind === 'synced'} addUser={adminApi ? (email) => adminApi.addUser(email, 'user') : undefined} />
+            ) : undefined}
+          />
         ) : route.name === 'trip' ? (
           <section className="page"><h2>{sync.kind === 'syncing' ? 'Getting your trips from Google Drive…' : "That trip isn't saved here."}</h2><a className="btn" href="#/">See your trips</a></section>
+        ) : route.name === 'shared' ? (
+          drive ? (
+            <SharedTrip ctx={drive} fileId={route.fileId} pick={pick} onOpen={(t) => { forgetDeleted([t.id]); putTrips([t]); go(`#/trip/${t.id}`) }} />
+          ) : <section className="page"><h2>Sign in to open the trip a friend shared.</h2></section>
         ) : route.name === 'admin' ? (
           adminApi ? <AdminPage api={adminApi} self={account!.email} /> : <section className="page"><h2>This page is for admins.</h2><a className="btn" href="#/">See your trips</a></section>
         ) : route.name === 'handoff' ? (

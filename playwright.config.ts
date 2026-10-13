@@ -28,6 +28,7 @@ export default defineConfig({
     env: {
       VITE_GOOGLE_CLIENT_ID: 'e2e-client.apps.googleusercontent.com',
       VITE_WORKER_URL: 'https://worker.e2e.test',
+      VITE_GOOGLE_API_KEY: 'e2e-key',
     },
   },
 })

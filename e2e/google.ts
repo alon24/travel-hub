@@ -1,3 +1,4 @@
+import { FakeDrive } from '../src/test/fakeDrive.ts'
 import type { Page } from '@playwright/test'
 
 export const ALLOWED_EMAIL = 'e2e@example.com'
@@ -66,23 +67,49 @@ export async function mockGoogle(page: Page, email = ALLOWED_EMAIL) {
   )
 }
 
-/** An empty Google Drive that accepts uploads, for the hub's trip sync */
-export async function mockDrive(page: Page) {
-  const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': 'authorization, content-type', 'access-control-allow-methods': 'GET, POST, PATCH' }
-  const uploads: string[] = []
-  await page.route(/googleapis\.com\/(upload\/)?drive\/v3\/files/, (r) => {
-    if (r.request().method() === 'OPTIONS') return r.fulfill({ status: 204, headers: cors })
-    if (r.request().method() === 'GET') return r.fulfill({ json: { files: [] }, headers: cors })
-    uploads.push(r.request().url())
-    return r.fulfill({ json: { id: `f${uploads.length}` }, headers: cors })
+/**
+ * Google Drive for the hub's trip sync and sharing: the same FakeDrive the unit tests use, behind page.route.
+ * Returns it, so a test can add a friend's trip or read what was shared.
+ */
+export async function mockDrive(page: Page, drive = new FakeDrive('e2e-token', ALLOWED_EMAIL)) {
+  const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': 'authorization, content-type', 'access-control-allow-methods': 'GET, POST, PATCH, DELETE' }
+  await page.route(/googleapis\.com\/(upload\/)?drive\/v3\/files/, async (r) => {
+    const req = r.request()
+    if (req.method() === 'OPTIONS') return r.fulfill({ status: 204, headers: cors })
+    const res = await drive.fetch(req.url(), { method: req.method(), headers: req.headers(), body: req.postData() ?? undefined })
+    return r.fulfill({ status: res.status, body: res.status === 204 ? '' : await res.text(), headers: { ...cors, 'content-type': 'application/json' } })
   })
-  return uploads
+  return drive
 }
 
-export async function signIn(page: Page, email = ALLOWED_EMAIL) {
+/** Google Picker that picks the file it was opened on, as a person would; picking makes it readable (drive.file) */
+export async function mockPicker(page: Page, drive: FakeDrive) {
+  await page.exposeFunction('__pickInFakeDrive', (id: string) => {
+    drive.files.get(id)!.hidden = false
+  })
+  await page.route('https://apis.google.com/js/api.js', (r) =>
+    r.fulfill({
+      contentType: 'text/javascript',
+      body: `window.gapi = { load: (n, cb) => cb() };
+        window.google = window.google || {};
+        window.google.picker = {
+          ViewId: { DOCS: 'docs' }, Action: { PICKED: 'picked', CANCEL: 'cancel' },
+          DocsView: class { setMimeTypes() { return this } setFileIds(id) { this.id = id; return this } },
+          PickerBuilder: class {
+            addView(v) { this.v = v; return this } setOAuthToken() { return this } setDeveloperKey() { return this }
+            setAppId() { return this } setCallback(cb) { this.cb = cb; return this }
+            build() { const b = this; return { setVisible: async () => { await window.__pickInFakeDrive(b.v.id); b.cb({ action: 'picked', docs: [{ id: b.v.id }] }) } } }
+          },
+        };`,
+    }),
+  )
+}
+
+export async function signIn(page: Page, email = ALLOWED_EMAIL, drive?: FakeDrive) {
   await mockGoogle(page, email)
   await mockWorker(page, email)
-  await mockDrive(page)
+  const d = await mockDrive(page, drive)
   await page.goto('/')
   await page.getByRole('button', { name: 'Sign in with Google' }).click()
+  return d
 }

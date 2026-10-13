@@ -8,6 +8,8 @@ const schema = z.object({
   VITE_WORKER_URL: z.union([z.literal(''), z.url()]).default(''),
   /** Google OAuth client (same one as MyMaps AI). Empty = no sign-in gate (local dev only; CI refuses to build without it). */
   VITE_GOOGLE_CLIENT_ID: z.string().default(''),
+  /** Browser key for the Google Picker (same one as MyMaps AI): opening a trip a friend shared. Empty = that step explains itself. */
+  VITE_GOOGLE_API_KEY: z.string().default(''),
   /** Sibling apps; empty = their GitHub Pages addresses (src/links.ts) */
   VITE_SKYHOP_URL: z.union([z.literal(''), z.url()]).default(''),
   VITE_MYMAPS_URL: z.union([z.literal(''), z.url()]).default(''),

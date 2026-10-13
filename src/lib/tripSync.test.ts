@@ -67,4 +67,33 @@ describe('syncTrips', () => {
     expect((await syncTrips(ctx())).pulled).toBe(0)
     await expect(syncTrips({ token: 'old', fetch: drive.fetch })).rejects.toThrow(/sign in again/)
   })
+
+  describe('a trip a friend shared with you', () => {
+    const theirs = () => ({ ...trip('Dana in Lisbon', '2026-10-12T10:00:00Z'), id: 'trip_dana' })
+
+    it('comes in once you have opened it, and your edits go back to their file', async () => {
+      drive.addFriendsTrip('shared1', theirs(), true)
+      expect((await syncTrips(ctx())).pulled).toBe(1)
+      saveTrip({ ...getTrip('trip_dana')!, title: 'Dana and me in Lisbon', updatedAt: '2026-10-13T08:00:00.000Z' })
+      expect(await syncTrips(ctx())).toEqual({ pulled: 0, pushed: 1, removed: 0 })
+      expect(JSON.parse(drive.files.get('shared1')!.content).title).toBe('Dana and me in Lisbon')
+      expect(drive.files.get('shared1')!.parents).toEqual(['their-folder'])   // stays in their Drive, not copied to yours
+    })
+
+    it('stays out of sight until you open the invite (Drive hides it from the hub until then)', async () => {
+      drive.addFriendsTrip('shared1', theirs())
+      expect((await syncTrips(ctx())).pulled).toBe(0)
+      expect(getTrip('trip_dana')).toBeUndefined()
+    })
+
+    it('deleting it only hides it here: it is not trashed for them and does not come back', async () => {
+      drive.addFriendsTrip('shared1', theirs(), true)
+      await syncTrips(ctx())
+      deleteTrip('trip_dana')
+      expect(await syncTrips(ctx())).toEqual({ pulled: 0, pushed: 0, removed: 0 })
+      expect(drive.files.get('shared1')!.trashed).toBe(false)
+      expect(getTrip('trip_dana')).toBeUndefined()
+      expect(deletedTrips()).toEqual(['trip_dana'])
+    })
+  })
 })

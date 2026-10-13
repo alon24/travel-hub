@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useState, type FormEvent, type ReactNode } from 'react'
 import { airport } from '../data/airports.ts'
 import { geocode } from '../lib/geocode.ts'
 import { hubUrl, MYMAPS_URL, SKYHOP_URL } from '../links.ts'
@@ -15,6 +15,8 @@ interface Props {
   /** Leaves the page (Skyhop, MyMaps). Injectable for tests. */
   navigate?: (url: string) => void
   geocoder?: typeof geocode
+  /** Planning it with friends (TripShare); only when signed in to Drive */
+  share?: ReactNode
 }
 
 const fmtDay = dayLabel
@@ -23,7 +25,7 @@ const money = (n: number, currency = 'ILS') => new Intl.NumberFormat('en-GB', { 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
 
 /** Everything about one trip, with the next step always one tap away. */
-export function TripPage({ trip, onChange, onDelete, navigate = (u) => window.location.assign(u), geocoder = geocode }: Props) {
+export function TripPage({ trip, onChange, onDelete, navigate = (u) => window.location.assign(u), geocoder = geocode, share }: Props) {
   const coverage = stayCoverage(trip)
   const openNights = coverage.reduce((n, c) => n + c.open.length, 0)
   const currency = trip.budget?.currency ?? 'ILS'
@@ -51,6 +53,7 @@ export function TripPage({ trip, onChange, onDelete, navigate = (u) => window.lo
             <div><span className="label">Per person</span><b className="mono">{money(total / people, currency)}</b></div>
             <p className="hint">Flights {money(flightTotal(trip), currency)} · stays {money(stayTotal(trip), currency)} · {plural(people, 'traveler')}</p>
           </section>
+          {share}
           <button type="button" className="btn small danger" onClick={() => confirm(`Delete "${trip.title}"?`) && onDelete()}>Delete trip</button>
         </div>
 
