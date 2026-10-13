@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 
 /** Hash routes. Plain anchors like #apps are not routes: they stay on the landing page and scroll. */
-export type Route = { name: 'home' } | { name: 'new' } | { name: 'trip'; id: string } | { name: 'handoff' } | { name: 'admin' }
+export type Route = { name: 'home' } | { name: 'new' } | { name: 'trip'; id: string } | { name: 'handoff' } | { name: 'admin' } | { name: 'shared'; fileId: string }
 
 export function parseRoute(hash: string): Route {
   if (hash === '#/new') return { name: 'new' }
@@ -9,6 +9,8 @@ export function parseRoute(hash: string): Route {
   const trip = hash.match(/^#\/trip\/([\w-]+)$/)
   if (trip) return { name: 'trip', id: trip[1] }
   if (hash.startsWith('#/handoff/')) return { name: 'handoff' }
+  const shared = hash.match(/^#\/shared\/([\w-]+)$/)
+  if (shared) return { name: 'shared', fileId: shared[1] }
   return { name: 'home' }
 }
 

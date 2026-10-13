@@ -264,3 +264,18 @@ input:focus-visible,textarea:focus-visible{outline:2px solid var(--sky);outline-
 .audit li{display:flex;flex-wrap:wrap;gap:4px 12px;padding:6px 0;border-bottom:1px solid var(--line)}
 .audit .when{color:var(--muted);min-width:13ch}
 .audit .who{min-width:0;overflow-wrap:anywhere}
+
+/* ---------- planning a trip with friends ---------- */
+.share{display:grid;gap:12px}
+.share h2{margin:0;font-size:1rem}
+.share p{margin:0}
+.people{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.people li{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0}
+.people .who{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.invite{display:flex;gap:8px}
+.invite input{flex:1}
+.invite-link{display:grid;gap:8px;padding:12px;border:1.5px dashed var(--amber);border-radius:12px}
+.invite-link code{font-size:.78rem;overflow-wrap:anywhere;color:var(--muted)}
+.row-btns{display:flex;flex-wrap:wrap;gap:8px}
+.shared p{max-width:52ch}
+.shared .btn{margin-right:8px}

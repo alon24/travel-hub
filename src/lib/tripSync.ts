@@ -10,7 +10,8 @@ export interface SyncResult {
 
 /**
  * Makes this device and Google Drive hold the same trips. For each trip the newer `updatedAt` wins
- * (one person editing on a phone and a laptop, not live co-editing). A trip deleted here is trashed in Drive.
+ * (one person editing on a phone and a laptop, or friends taking turns; not live co-editing). A trip deleted here is trashed in Drive.
+ * Trips friends shared with you come along, and your edits to them go back to the same file.
  */
 export async function syncTrips(ctx: DriveCtx): Promise<SyncResult> {
   const remote = await listRemote(ctx)
@@ -19,9 +20,12 @@ export async function syncTrips(ctx: DriveCtx): Promise<SyncResult> {
   let folder: Promise<string> | null = null
   const inFolder = () => (folder ??= folderId(ctx))
 
-  const gone = remote.filter((r) => deleted.includes(r.tripId))
+  // Your own trips go to the Drive trash. A friend's trip can't be trashed by you: it stays hidden here
+  // (its tombstone is kept, so it isn't pulled back), and it is still theirs.
+  const gone = remote.filter((r) => r.mine && deleted.includes(r.tripId))
   for (const r of gone) await trash(ctx, r.fileId)
-  forgetDeleted(deleted)
+  const theirs = new Set(remote.filter((r) => !r.mine).map((r) => r.tripId))
+  forgetDeleted(deleted.filter((id) => !theirs.has(id)))
 
   const pulled: Trip[] = []
   let pushed = 0
