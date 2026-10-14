@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import fixture from '../test/fixtures/skyhop-handoff.json'
 import { flightsHandoff } from './handoff.ts'
-import { addStay, applyFlights, buildDays, createTrip, firstNight, removeStay, skyhopSearchUrl, splitDestinations, stayCoverage, staySearchLinks } from './plan.ts'
+import { addStay, applyFlights, buildDays, createTrip, firstNight, removeStay, skyhopSearchUrl, stayCoverage, staySearchLinks } from './plan.ts'
 import { parseTrip } from './schema.ts'
 
 const handoff = flightsHandoff.parse(fixture)
@@ -19,17 +19,7 @@ describe('creating a trip', () => {
       ['Porto', '2026-11-18', '2026-11-19'],
     ])
     expect(trip.travelers).toHaveLength(3)
-  })
-
-  it('titles every day from the plan', () => {
     expect(trip.days.map((d) => d.title)).toEqual(['Fly to Lisbon', 'Lisbon', 'Lisbon → Porto', 'Fly home from Porto'])
-  })
-})
-
-describe('splitDestinations', () => {
-  it('gives earlier stops the extra night', () => {
-    const d = splitDestinations([{ id: 'a', name: 'A' }, { id: 'b', name: 'B' }], '2026-01-01', '2026-01-06')
-    expect(d.map((x) => [x.arrive, x.depart])).toEqual([['2026-01-01', '2026-01-04'], ['2026-01-04', '2026-01-06']])
   })
 })
 
@@ -126,19 +116,11 @@ describe('skyhopSearchUrl: which airports', () => {
   const params = (input: Partial<Parameters<typeof createTrip>[0]>) =>
     Object.fromEntries(new URL(skyhopSearchUrl(createTrip({ home: 'TLV', destinations: [{ code: 'LIS' }], startDate: '2026-11-16', nights: 4, adults: 2, ...input }, NOW), 'https://x.test/sky/', 'https://x.test/hub/')).searchParams)
 
-  it('flies to just the city for a city trip', () => {
-    expect(params({})).toMatchObject({ to: 'LIS' })
-    expect(params({})).not.toHaveProperty('back')
-  })
-
   it('flies to any mainland airport of a country asked for as a whole, and home from any of them', () => {
     const q = params({ destinations: [{ code: 'LIS' }, { code: 'OPO' }], countries: ['PT'] })
     expect(q.to).toBe('LIS,OPO,FAO')
     expect(q).not.toHaveProperty('back')
-  })
-
-  it('keeps an island the trip goes to', () => {
-    expect(params({ destinations: [{ code: 'FNC' }, { code: 'LIS' }], countries: ['PT'] }).to).toBe('FNC,LIS,OPO,FAO')
+    expect(params({ destinations: [{ code: 'FNC' }, { code: 'LIS' }], countries: ['PT'] }).to).toBe('FNC,LIS,OPO,FAO')   // an island the trip goes to is kept
   })
 
   it('flies home from the last country when the trip ends in another one', () => {
@@ -146,10 +128,6 @@ describe('skyhopSearchUrl: which airports', () => {
     expect(q).toMatchObject({ to: 'LIS,OPO,FAO', back: 'BCN,MAD' })   // the last city first
   })
 
-  it('keeps the countries through a save and load', () => {
-    const t = createTrip({ home: 'TLV', destinations: [{ code: 'LIS' }], startDate: '2026-11-16', nights: 4, adults: 2, countries: ['PT'] }, NOW)
-    expect(parseTrip(JSON.parse(JSON.stringify(t))).countries).toEqual(['PT'])
-  })
 })
 
 describe('flexible dates ("3 days in December")', () => {

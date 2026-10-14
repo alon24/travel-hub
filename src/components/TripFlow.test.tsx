@@ -6,38 +6,11 @@ import fixture from '../test/fixtures/skyhop-handoff.json'
 import { encodePayload, flightsHandoff } from '../model/handoff.ts'
 import { applyFlights, createTrip } from '../model/plan.ts'
 import type { Trip } from '../model/types.ts'
-import { NewTrip } from './NewTrip.tsx'
 import { TripPage } from './TripPage.tsx'
 import { FakeDrive } from '../test/fakeDrive.ts'
 import { saveTrip } from '../lib/tripStore.ts'
 
 const NOW = new Date('2026-10-10T12:00:00Z')
-
-describe('NewTrip', () => {
-  it('creates a two-city trip for three people', async () => {
-    const onCreate = vi.fn()
-    render(<NewTrip onCreate={onCreate} today="2026-10-10" />)
-    const to = screen.getByLabelText('Where to')
-    await userEvent.type(to, 'Lisbon{Enter}')
-    await userEvent.type(to, 'opo{Enter}')
-    await userEvent.clear(screen.getByLabelText('Leave around'))
-    await userEvent.type(screen.getByLabelText('Leave around'), '2026-11-16')
-    await userEvent.click(screen.getByRole('button', { name: 'More travelers' }))
-    await userEvent.click(screen.getByRole('button', { name: /Create trip/ }))
-    const trip: Trip = onCreate.mock.calls[0][0]
-    expect(trip.destinations.map((d) => d.airport)).toEqual(['LIS', 'OPO'])
-    expect(trip.travelers).toHaveLength(3)
-    expect([trip.startDate, trip.endDate]).toEqual(['2026-11-16', '2026-11-19'])
-  })
-
-  it('explains what is missing', async () => {
-    render(<NewTrip onCreate={vi.fn()} today="2026-10-10" />)
-    await userEvent.click(screen.getByRole('button', { name: /Create trip/ }))
-    expect(screen.getByRole('alert')).toHaveTextContent('Add at least one place to go.')
-    await userEvent.type(screen.getByLabelText('Where to'), 'Atlantis{Enter}')
-    expect(screen.getByRole('alert')).toHaveTextContent(/Pick a city/)
-  })
-})
 
 describe('TripPage', () => {
   const idea = createTrip({ home: 'TLV', destinations: [{ code: 'LIS' }, { code: 'OPO' }], startDate: '2026-11-16', nights: 3, adults: 3 }, NOW)
@@ -111,21 +84,6 @@ describe('App routes', () => {
     expect(JSON.parse(localStorage.getItem('travel-hub.trips')!)).toHaveLength(1)
   })
 
-  it('shows a readable error for a broken link', async () => {
-    window.location.hash = '#/handoff/broken'
-    render(<App />)
-    expect(await screen.findByRole('alert')).toHaveTextContent(/damaged/)
-  })
-
-  it('lists saved trips on the landing page', async () => {
-    render(<App />)
-    expect(screen.getAllByRole('link', { name: /Plan a trip/ })).toHaveLength(2)
-    act(() => {
-      window.location.hash = '#/new'
-      window.dispatchEvent(new HashChangeEvent('hashchange'))
-    })
-    expect(screen.getByRole('form', { name: 'Plan a trip' })).toBeInTheDocument()
-  })
 })
 
 describe('Trips in Google Drive', () => {

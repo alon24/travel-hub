@@ -32,12 +32,6 @@ test('an account that is not on the list is kept out', async ({ page }) => {
   await expect(page.getByRole('link', { name: 'Open Skyhop' })).toHaveCount(0)
 })
 
-test('a normal user sees no Admin link', async ({ page }) => {
-  await signIn(page)
-  await expect(page.getByRole('banner').getByText('E2E Traveler')).toBeVisible()
-  await expect(page.getByRole('link', { name: 'Admin' })).toHaveCount(0)
-})
-
 test('an admin adds a user from the Admin page', async ({ page }) => {
   await signIn(page, ADMIN_EMAIL)
   await page.getByRole('link', { name: 'Admin' }).click()

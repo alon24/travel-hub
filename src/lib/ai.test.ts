@@ -36,9 +36,6 @@ describe('askAi', () => {
     await expect(askAi('s', [], {}, env)).rejects.toMatchObject({ status: 401 })
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ error: 'openrouter returned 500' }), { status: 502 })))
     await expect(askAi('s', [], {}, env)).rejects.toThrow('AI error 502: openrouter returned 500')
-  })
-
-  it('rejects a malformed answer', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(ok(42)))
     await expect(askAi('s', [], {}, env)).rejects.toMatchObject({ status: 502 })
   })

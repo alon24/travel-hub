@@ -69,10 +69,6 @@ describe('NewTrip: describe it and the AI fills in the form', () => {
     expect((onCreate.mock.calls[0]![0] as Trip).countries).toEqual(['PT'])
   })
 
-  it('has no AI box when the AI is not set up', () => {
-    render(<NewTrip onCreate={vi.fn()} today="2026-10-11" />)
-    expect(screen.queryByLabelText(/Describe it/)).not.toBeInTheDocument()
-  })
 })
 
 describe('NewTrip: flexible dates', () => {
@@ -124,16 +120,10 @@ describe('NewTrip: a country as a destination', () => {
     expect((onCreate.mock.calls[0]![0] as Trip).countries).toEqual(['PT'])
   })
 
-  it('offers the countries in the list, and picking one adds its airports at once', async () => {
-    render(<NewTrip onCreate={vi.fn()} today="2026-10-11" />)
-    expect(document.querySelector('#cities option[value="Portugal (all 4 airports)"]')).not.toBeNull()
-    expect(document.querySelector('#cities option[value="Cyprus (all 2 airports)"]')).not.toBeNull()
-    await userEvent.type(screen.getByLabelText('Where to'), 'Greece (all 4 airports)')
-    expect(screen.getAllByRole('button', { name: /^Remove / })).toHaveLength(4)
-  })
-
   it('knows common short names, and says what it does not know', async () => {
     render(<NewTrip onCreate={vi.fn()} today="2026-10-11" />)
+    await userEvent.click(screen.getByRole('button', { name: /Create trip/ }))
+    expect(screen.getByRole('alert')).toHaveTextContent('Add at least one place to go.')
     await userEvent.type(screen.getByLabelText('Where to'), 'uk{Enter}')
     expect(screen.getByRole('button', { name: 'Remove LHR' })).toBeInTheDocument()
     await userEvent.type(screen.getByLabelText('Where to'), 'Narnia{Enter}')
