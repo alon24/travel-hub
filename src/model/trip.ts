@@ -1,3 +1,4 @@
+import { dateNames } from '../i18n.ts'
 import type { IsoDate, Trip } from './types.ts'
 
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -44,5 +45,6 @@ export function dayLabel(d: IsoDate): string {
   const date = new Date(`${d}T00:00:00Z`)
   const wd = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getUTCDay()]
   const mon = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][date.getUTCMonth()]
-  return `${wd} ${date.getUTCDate()} ${mon}`
+  const he = dateNames(date.getUTCDay(), date.getUTCMonth())
+  return `${he?.[0] ?? wd} ${date.getUTCDate()} ${he?.[1] ?? mon}`
 }

@@ -1,3 +1,4 @@
+import { t } from '../i18n.ts'
 import { parseTrip } from '../model/schema.ts'
 import type { Trip } from '../model/types.ts'
 
@@ -41,9 +42,9 @@ async function call(ctx: DriveCtx, url: string, init: RequestInit = {}): Promise
   try {
     res = await (ctx.fetch ?? fetch)(url, { ...init, headers })
   } catch {
-    throw new DriveError("Can't reach Google Drive.")
+    throw new DriveError(t("Can't reach Google Drive."))
   }
-  if (!res.ok) throw new DriveError(res.status === 401 ? 'Google Drive needs you to sign in again.' : res.status === 403 ? "Google Drive didn't allow that." : `Google Drive error ${res.status}.`, res.status)
+  if (!res.ok) throw new DriveError(res.status === 401 ? t('Google Drive needs you to sign in again.') : res.status === 403 ? t("Google Drive didn't allow that.") : t('Google Drive error {status}.', { status: res.status }), res.status)
   return res
 }
 

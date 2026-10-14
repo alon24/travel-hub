@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { AIRPORTS, findAirport, findCountry } from '../data/airports.ts'
 import { addDays } from '../model/plan.ts'
+import { t } from '../i18n.ts'
 import { askAi, type AiAuth } from './ai.ts'
 import type { Env } from '../env.ts'
 
@@ -94,7 +95,7 @@ export function readPlanReply(content: string, today: string): TripDraft {
   try {
     raw = JSON.parse(json ?? '')
   } catch {
-    throw new Error("The AI didn't return a plan. Try saying it differently.")
+    throw new Error(t("The AI didn't return a plan. Try saying it differently."))
   }
   const r = Reply.parse(raw)
   const places: string[] = []

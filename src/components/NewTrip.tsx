@@ -1,3 +1,4 @@
+import { plural, t } from '../i18n.ts'
 import { useState, type FormEvent } from 'react'
 import { AIRPORTS, COUNTRIES, countryLabel, findAirport, findCountry, mainlandAirports } from '../data/airports.ts'
 import { createTrip, addDays } from '../model/plan.ts'
@@ -53,13 +54,13 @@ export function NewTrip({ onCreate, draft, today = new Date().toISOString().slic
       if (d.title) setTitle(d.title)
       setError('')
       setNote(
-        (d.places.length ? 'Filled in. Check it, then create the trip.' : "Couldn't tell where you're going. Add a city below.") +
-          (d.window ? ` Any ${d.nights ?? nights} nights between ${d.window.from} and ${d.window.to}: Skyhop finds the cheapest days.` : '') +
-          (d.split ? ` ${d.places.map((c, i) => `${findAirport(c)?.city ?? c} ${d.split![i]} nights`).join(', ')}.` : '') +
-          (d.unknown.length ? ` Not in our city list yet: ${d.unknown.join(', ')}.` : ''),
+        (d.places.length ? t('Filled in. Check it, then create the trip.') : t("Couldn't tell where you're going. Add a city below.")) +
+          (d.window ? ' ' + t('Any {n} nights between {from} and {to}: Skyhop finds the cheapest days.', { n: d.nights ?? nights, from: d.window.from, to: d.window.to }) : '') +
+          (d.split ? ` ${d.places.map((c, i) => `${findAirport(c)?.city ?? c} ${plural(d.split![i]!, 'night')}`).join(', ')}.` : '') +
+          (d.unknown.length ? ' ' + t('Not in our city list yet: {list}.', { list: d.unknown.join(', ') }) : ''),
       )
     } catch (e) {
-      setNote(e instanceof Error ? e.message : 'The AI is not available right now.')
+      setNote(e instanceof Error ? e.message : t('The AI is not available right now.'))
     } finally {
       setDrafting(false)
     }
@@ -68,7 +69,7 @@ export function NewTrip({ onCreate, draft, today = new Date().toISOString().slic
   const addPlace = (text = place) => {
     const a = findAirport(text)
     const country = a ? undefined : findCountry(text)
-    if (!a && !country) return setError(`Pick a city or a country from the list, or type an airport code (e.g. LIS).`)
+    if (!a && !country) return setError(t('Pick a city or a country from the list, or type an airport code (e.g. LIS).'))
     // A country adds all its airports, so every one of them is searched; remove the ones you don't want
     const codes = a ? [a.code] : country!.airports.map((x) => x.code)
     setPlaces([...places, ...codes.filter((c) => !places.includes(c))])
@@ -82,23 +83,23 @@ export function NewTrip({ onCreate, draft, today = new Date().toISOString().slic
     e.preventDefault()
     const home = findAirport(from)
     if (place.trim()) return addPlace()
-    if (!home) return setError('Where do you fly from? Pick a city or airport code.')
-    if (!places.length) return setError('Add at least one place to go.')
-    if (flexible && addDays(flexible.from, nights) > flexible.to) return setError(`${nights} nights don't fit between ${flexible.from} and ${flexible.to}. Move "Back by" later.`)
+    if (!home) return setError(t('Where do you fly from? Pick a city or airport code.'))
+    if (!places.length) return setError(t('Add at least one place to go.'))
+    if (flexible && addDays(flexible.from, nights) > flexible.to) return setError(t("{n} nights don't fit between {from} and {to}. Move \"Back by\" later.", { n: nights, from: flexible.from, to: flexible.to }))
     onCreate(createTrip({ title, home: home.code, destinations: places.map((code, i) => ({ code, nights: split?.[i] })), startDate: start, nights, adults, countries: wholeCountries, ...(flexible ? { flexible } : {}) }))
   }
 
   return (
     <>
     {draft && (
-      <div className="wish" role="group" aria-label="Describe your trip">
-        <label htmlFor="nt-wish">Describe it <span className="hint">· AI fills in the form</span></label>
+      <div className="wish" role="group" aria-label={t('Describe your trip')}>
+        <label htmlFor="nt-wish">{t('Describe it')} <span className="hint">{t('· AI fills in the form')}</span></label>
         <textarea
           id="nt-wish"
           rows={2}
           maxLength={500}
           value={wish}
-          placeholder="3 nights in Lisbon and Porto in November, 3 of us from Tel Aviv"
+          placeholder={t('3 nights in Lisbon and Porto in November, 3 of us from Tel Aviv')}
           onChange={(e) => setWish(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
@@ -108,30 +109,30 @@ export function NewTrip({ onCreate, draft, today = new Date().toISOString().slic
           }}
         />
         <button type="button" className="btn" disabled={drafting || !wish.trim()} onClick={() => void fillIn()}>
-          {drafting ? 'Filling in…' : 'Fill in the form'}
+          {drafting ? t('Filling in…') : t('Fill in the form')}
         </button>
         {note && <p className="hint" role="status">{note}</p>}
       </div>
     )}
-    <form className="planner" onSubmit={submit} aria-label="Plan a trip">
+    <form className="planner" onSubmit={submit} aria-label={t('Plan a trip')}>
       <datalist id="cities">
         {COUNTRIES.map((c) => <option key={c.code} value={countryLabel(c)} />)}
         {AIRPORTS.map((a) => <option key={a.code} value={`${a.city} (${a.code})`} />)}
       </datalist>
       <div className="field" data-help="where">
-        <label htmlFor="nt-to">Where to</label>
+        <label htmlFor="nt-to">{t('Where to')}</label>
         <div className="places">
           {places.map((code) => (
             <span key={code} className="place-chip">
               {findAirport(code)?.city} <b className="mono">{code}</b>
-              <button type="button" aria-label={`Remove ${code}`} onClick={() => { setPlaces(places.filter((p) => p !== code)); setSplit(undefined) }}>×</button>
+              <button type="button" aria-label={t('Remove {name}', { name: code })} onClick={() => { setPlaces(places.filter((p) => p !== code)); setSplit(undefined) }}>×</button>
             </span>
           ))}
           <input
             id="nt-to"
             list="cities"
             value={place}
-            placeholder={places.length ? 'Add another city or country' : 'Lisbon, Portugal…'}
+            placeholder={places.length ? t('Add another city or country') : t('Lisbon, Portugal…')}
             onChange={(e) => {
               setPlace(e.target.value)
               // Picking from the list adds the city (or the whole country) right away
@@ -145,32 +146,32 @@ export function NewTrip({ onCreate, draft, today = new Date().toISOString().slic
             }}
           />
         </div>
-        <span className="hint">In travel order. Flying home from the last one is fine (open-jaw).</span>
+        <span className="hint">{t('In travel order. Flying home from the last one is fine (open-jaw).')}</span>
         {wholeCountries.map((c) => (
           <span key={c} className="hint" role="note">
-            ✈ Flights to any airport in {COUNTRIES.find((x) => x.code === c)?.name ?? c}: {[...new Set([...mainlandAirports(c), ...places.filter((p) => findAirport(p)?.country === c)])].join(', ')}
+            ✈ {t('Flights to any airport in {country}:', { country: COUNTRIES.find((x) => x.code === c)?.name ?? c })} {[...new Set([...mainlandAirports(c), ...places.filter((p) => findAirport(p)?.country === c)])].join(', ')}
           </span>
         ))}
       </div>
       <div className="row" data-help="when">
         <div className="field">
-          <label htmlFor="nt-from">From</label>
+          <label htmlFor="nt-from">{t('From')}</label>
           <input id="nt-from" list="cities" value={from} onChange={(e) => setFrom(e.target.value)} />
         </div>
         {flexible ? (
           <>
             <div className="field">
-              <label htmlFor="nt-from-day">Leave from</label>
+              <label htmlFor="nt-from-day">{t('Leave from')}</label>
               <input id="nt-from-day" type="date" value={flexible.from} min={today} onChange={(e) => setFlexible({ ...flexible, from: e.target.value })} required />
             </div>
             <div className="field">
-              <label htmlFor="nt-to-day">Back by</label>
+              <label htmlFor="nt-to-day">{t('Back by')}</label>
               <input id="nt-to-day" type="date" value={flexible.to} min={flexible.from} onChange={(e) => setFlexible({ ...flexible, to: e.target.value })} required />
             </div>
           </>
         ) : (
           <div className="field">
-            <label htmlFor="nt-start">Leave around</label>
+            <label htmlFor="nt-start">{t('Leave around')}</label>
             <input id="nt-start" type="date" value={start} min={today} onChange={(e) => setStart(e.target.value)} required />
           </div>
         )}
@@ -181,18 +182,18 @@ export function NewTrip({ onCreate, draft, today = new Date().toISOString().slic
           checked={Boolean(flexible)}
           onChange={(e) => setFlexible(e.target.checked ? { from: start, to: addDays(start, Math.max(nights, 30)) } : undefined)}
         />{' '}
-        Flexible dates: find the cheapest {nights} nights in a window
+        {t('Flexible dates: find the cheapest {n} nights in a window', { n: nights })}
       </label>
       <div className="row">
-        <Stepper id="nt-nights" label="Nights" value={nights} min={1} max={30} onChange={(n) => { setNights(n); setSplit(undefined) }} />
-        <Stepper id="nt-adults" label="Travelers" value={adults} min={1} max={9} onChange={setAdults} />
+        <Stepper id="nt-nights" label={t('Nights')} value={nights} min={1} max={30} onChange={(n) => { setNights(n); setSplit(undefined) }} />
+        <Stepper id="nt-adults" label={t('Travelers')} value={adults} min={1} max={9} onChange={setAdults} />
       </div>
       <div className="field">
-        <label htmlFor="nt-title">Name <span className="hint">· optional</span></label>
-        <input id="nt-title" value={title} placeholder="e.g. Portugal with the guys" onChange={(e) => setTitle(e.target.value)} />
+        <label htmlFor="nt-title">{t('Name')} <span className="hint">{t('· optional')}</span></label>
+        <input id="nt-title" value={title} placeholder={t('e.g. Portugal with the guys')} onChange={(e) => setTitle(e.target.value)} />
       </div>
       {error && <p className="form-error" role="alert">{error}</p>}
-      <button type="submit" className="btn solid" data-help="create">Create trip →</button>
+      <button type="submit" className="btn solid" data-help="create">{t('Create trip →')}</button>
     </form>
     </>
   )
@@ -204,9 +205,9 @@ function Stepper({ id, label, value, min, max, onChange }: { id: string; label: 
     <div className="field">
       <label htmlFor={id}>{label}</label>
       <div className="stepper">
-        <button type="button" aria-label={`Fewer ${label.toLowerCase()}`} onClick={() => set(value - 1)}>−</button>
+        <button type="button" aria-label={t('Fewer {what}', { what: label.toLowerCase() })} onClick={() => set(value - 1)}>−</button>
         <input id={id} type="number" inputMode="numeric" min={min} max={max} value={value} onChange={(e) => set(Number(e.target.value) || min)} />
-        <button type="button" aria-label={`More ${label.toLowerCase()}`} onClick={() => set(value + 1)}>+</button>
+        <button type="button" aria-label={t('More {what}', { what: label.toLowerCase() })} onClick={() => set(value + 1)}>+</button>
       </div>
     </div>
   )

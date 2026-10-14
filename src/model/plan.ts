@@ -1,3 +1,4 @@
+import { t } from '../i18n.ts'
 /**
  * Planning a Trip: pure functions the Trip page calls. Each takes a Trip and returns a new one.
  * Dates are YYYY-MM-DD strings compared as text; arithmetic goes through UTC midnight.
@@ -255,10 +256,10 @@ export function removeStay(trip: Trip, id: string, now = new Date()): Trip {
 /** Why these dates can't be a stay in that destination, or null when they can: real nights of the stop, not already sleeping elsewhere. */
 export function stayDatesError(trip: Pick<Trip, 'destinations' | 'stays'>, d: { destinationId: string; checkIn: IsoDate; checkOut: IsoDate }, exceptId?: string): string | null {
   const dest = trip.destinations.find((x) => x.id === d.destinationId)
-  if (!dest) return 'Unknown destination'
-  if (d.checkIn >= d.checkOut) return 'Check-out must be after check-in'
-  if (d.checkIn < dest.arrive || d.checkOut > dest.depart) return `Those nights are outside ${dest.name}`
-  if (trip.stays.some((s) => s.id !== exceptId && s.checkIn < d.checkOut && d.checkIn < s.checkOut)) return 'Some of those nights already have a stay'
+  if (!dest) return t('Unknown destination')
+  if (d.checkIn >= d.checkOut) return t('Check-out must be after check-in')
+  if (d.checkIn < dest.arrive || d.checkOut > dest.depart) return t('Those nights are outside {city}', { city: dest.name })
+  if (trip.stays.some((s) => s.id !== exceptId && s.checkIn < d.checkOut && d.checkIn < s.checkOut)) return t('Some of those nights already have a stay')
   return null
 }
 

@@ -1,3 +1,4 @@
+import { lang, setLang, t } from './i18n.ts'
 import exampleJson from './data/example-trip.json'
 import exampleSource from './data/example-trip.json?raw'
 import typesSource from './model/types.ts?raw'
@@ -37,48 +38,48 @@ const APPS = [
     key: 'sky',
     gate: 'SKY',
     name: 'Skyhop',
-    blurb: 'Flexible-date flight search. Give it a home airport, a few destinations and a date window, and it compares every day and trip length.',
+    blurb: t('Flexible-date flight search. Give it a home airport, a few destinations and a date window, and it compares every day and trip length.'),
     points: [
-      'Open-jaw, multi-stop and mixed-airline trips',
-      'Price-by-day chart and a destination × length matrix',
-      "Hands you to the airline's own site to book",
-      'Shared trip chat for planning with friends',
+      t('Open-jaw, multi-stop and mixed-airline trips'),
+      t('Price-by-day chart and a destination × length matrix'),
+      t("Hands you to the airline's own site to book"),
+      t('Shared trip chat for planning with friends'),
     ],
     href: SKYHOP_URL,
-    cta: 'Open Skyhop',
+    cta: t('Open Skyhop'),
   },
   {
     key: 'map',
     gate: 'MAP',
     name: 'MyMaps AI',
-    blurb: 'Personal maps in the style of Google My Maps, with day-by-day itineraries and an AI helper. Works on phone and desktop as an installable app.',
+    blurb: t('Personal maps in the style of Google My Maps, with day-by-day itineraries and an AI helper. Works on phone and desktop as an installable app.'),
     points: [
-      'Layers, points, lines and areas you can draw and edit',
-      'Trip days with numbered stops and distances',
-      'KML, KMZ, GeoJSON, CSV and GPX import and export',
-      'Saves and shares through Google Drive',
+      t('Layers, points, lines and areas you can draw and edit'),
+      t('Trip days with numbered stops and distances'),
+      t('KML, KMZ, GeoJSON, CSV and GPX import and export'),
+      t('Saves and shares through Google Drive'),
     ],
     href: MYMAPS_URL,
-    cta: 'Open MyMaps AI',
+    cta: t('Open MyMaps AI'),
   },
   {
     key: 'trip',
     gate: 'TRP',
     name: 'Trip',
     isNew: true,
-    blurb: 'The object that holds a whole trip. Each app keeps doing what it does well, and the Trip remembers which flights and which map belong to which vacation.',
-    points: ['Dates, destinations and who is going', 'Picked flights from Skyhop, booked or not', "The trip's MyMaps AI map, one layer per day", 'Stays, budget and notes'],
+    blurb: t('The object that holds a whole trip. Each app keeps doing what it does well, and the Trip remembers which flights and which map belong to which vacation.'),
+    points: [t('Dates, destinations and who is going'), t('Picked flights from Skyhop, booked or not'), t("The trip's MyMaps AI map, one layer per day"), t('Stays, budget and notes')],
     href: '#trip',
-    cta: 'See the model',
+    cta: t('See the model'),
   },
 ]
 
 const FIELDS: [string, string][] = [
-  ['startDate / endDate', "The trip's own dates. Skyhop's depart and return dates fill them in."],
-  ['days[]', 'One per calendar day. mapLayerId points to the MyMaps AI day layer with the same date.'],
-  ['flights[]', 'Legs picked in Skyhop: airports, times, flight numbers, price and the airline link.'],
-  ['apps.mymaps', "The map's id and Drive file id, so the map opens straight from the trip."],
-  ['apps.skyhop', 'The searches behind the flights, and the shared trip chat if there is one.'],
+  ['startDate / endDate', t("The trip's own dates. Skyhop's depart and return dates fill them in.")],
+  ['days[]', t('One per calendar day. mapLayerId points to the MyMaps AI day layer with the same date.')],
+  ['flights[]', t('Legs picked in Skyhop: airports, times, flight numbers, price and the airline link.')],
+  ['apps.mymaps', t("The map's id and Drive file id, so the map opens straight from the trip.")],
+  ['apps.skyhop', t('The searches behind the flights, and the shared trip chat if there is one.')],
 ]
 
 interface Props {
@@ -107,7 +108,7 @@ export default function App({ account, onSignOut, driveFetch, firstRunHelp = imp
       window.history.replaceState(null, '', `#/trip/${trip.id}`)
       window.dispatchEvent(new HashChangeEvent('hashchange'))
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not read the flights from Skyhop.')
+      setError(e instanceof Error ? e.message : t('Could not read the flights from Skyhop.'))
       window.history.replaceState(null, '', '#/')
       window.dispatchEvent(new HashChangeEvent('hashchange'))
     }
@@ -135,15 +136,16 @@ export default function App({ account, onSignOut, driveFetch, firstRunHelp = imp
       <header className="bar">
         <a className="brand" href="#/"><i />Travel Hub AI</a>
         <nav className="nav">
-          <a href="#/">My trips</a>
-          <a href="#apps">Apps</a>
-          <a href="#trip">Trip</a>
+          <a href="#/">{t('My trips')}</a>
+          <a href="#apps">{t('Apps')}</a>
+          <a href="#trip">{t('Trip')}</a>
           <a href={GITHUB_URL}>GitHub</a>
-          {isAdmin && <a href="#/admin">Admin</a>}
+          {isAdmin && <a href="#/admin">{t('Admin')}</a>}
         </nav>
+        <button type="button" className="btn small lang-btn" aria-label={t('Language')} onClick={() => setLang(lang === 'he' ? 'en' : 'he')}>{lang === 'he' ? 'EN' : 'עב'}</button>
         {screen && (
-          <button type="button" className="btn small help-btn" data-help="help" aria-label="Help: how this screen works" aria-expanded={help === screen} onClick={() => setHelp(help ? null : screen)}>
-            ? Help
+          <button type="button" className="btn small help-btn" data-help="help" aria-label={t('Help: how this screen works')} aria-expanded={help === screen} onClick={() => setHelp(help ? null : screen)}>
+            {t('? Help')}
           </button>
         )}
         {account && (
@@ -151,11 +153,11 @@ export default function App({ account, onSignOut, driveFetch, firstRunHelp = imp
             {account.picture && <img src={account.picture} alt="" width={28} height={28} referrerPolicy="no-referrer" />}
             <span className="account-email" title={account.email}>{account.name ?? account.email}</span>
             {sync.kind !== 'off' && (
-              <span className={`sync sync--${sync.kind}`} role="status" title={sync.kind === 'error' ? sync.message : 'Your trips are kept in your Google Drive, on every device you sign in on'}>
-                {sync.kind === 'syncing' ? 'Syncing…' : sync.kind === 'synced' ? '☁ In Drive' : '⚠ Drive'}
+              <span className={`sync sync--${sync.kind}`} role="status" title={sync.kind === 'error' ? sync.message : t('Your trips are kept in your Google Drive, on every device you sign in on')}>
+                {sync.kind === 'syncing' ? t('Syncing…') : sync.kind === 'synced' ? t('☁ In Drive') : t('⚠ Drive')}
               </span>
             )}
-            <button type="button" className="btn small" onClick={onSignOut}>Log out</button>
+            <button type="button" className="btn small" onClick={onSignOut}>{t('Log out')}</button>
           </div>
         )}
       </header>
@@ -165,8 +167,8 @@ export default function App({ account, onSignOut, driveFetch, firstRunHelp = imp
         {route.name === 'new' ? (
           <section className="page">
             <div className="section-head">
-              <span className="label">New trip</span>
-              <h2>Where are you going?</h2>
+              <span className="label">{t('New trip')}</span>
+              <h2>{t('Where are you going?')}</h2>
             </div>
             <NewTrip
               onCreate={(t) => go(`#/trip/${saveTrip(t).id}`)}
@@ -184,15 +186,15 @@ export default function App({ account, onSignOut, driveFetch, firstRunHelp = imp
             ) : undefined}
           />
         ) : route.name === 'trip' ? (
-          <section className="page"><h2>{sync.kind === 'syncing' ? 'Getting your trips from Google Drive…' : "That trip isn't saved here."}</h2><a className="btn" href="#/">See your trips</a></section>
+          <section className="page"><h2>{sync.kind === 'syncing' ? t('Getting your trips from Google Drive…') : t("That trip isn't saved here.")}</h2><a className="btn" href="#/">{t('See your trips')}</a></section>
         ) : route.name === 'shared' ? (
           drive ? (
             <SharedTrip ctx={drive} fileId={route.fileId} pick={pick} onOpen={(t) => { forgetDeleted([t.id]); putTrips([t]); go(`#/trip/${t.id}`) }} />
-          ) : <section className="page"><h2>Sign in to open the trip a friend shared.</h2></section>
+          ) : <section className="page"><h2>{t('Sign in to open the trip a friend shared.')}</h2></section>
         ) : route.name === 'admin' ? (
-          adminApi ? <AdminPage api={adminApi} self={account!.email} /> : <section className="page"><h2>This page is for admins.</h2><a className="btn" href="#/">See your trips</a></section>
+          adminApi ? <AdminPage api={adminApi} self={account!.email} /> : <section className="page"><h2>{t('This page is for admins.')}</h2><a className="btn" href="#/">{t('See your trips')}</a></section>
         ) : route.name === 'handoff' ? (
-          <section className="page"><p className="muted">Adding the flights to your trip…</p></section>
+          <section className="page"><p className="muted">{t('Adding the flights to your trip…')}</p></section>
         ) : (
           <Landing trips={trips} />
         )}
@@ -200,7 +202,7 @@ export default function App({ account, onSignOut, driveFetch, firstRunHelp = imp
       {help && <HelpGuide key={help} guide={GUIDES[help]} onClose={closeHelp} />}
 
       <footer>
-        <span>Travel Hub AI · Skyhop + MyMaps AI + Trip · <a href={`${import.meta.env.BASE_URL}privacy.html`}>Privacy</a> · <a href={`${import.meta.env.BASE_URL}terms.html`}>Terms</a></span>
+        <span>Travel Hub AI · Skyhop + MyMaps AI + Trip · <a href={`${import.meta.env.BASE_URL}privacy.html`}>{t('Privacy')}</a> · <a href={`${import.meta.env.BASE_URL}terms.html`}>{t('Terms')}</a></span>
         <span className="mono">v{versionLabel()} · TRIP_SCHEMA_VERSION = {example.schema}</span>
       </footer>
     </div>
@@ -212,27 +214,26 @@ function Landing({ trips }: { trips: Trip[] }) {
     <>
         <section className="hero">
           <div className="hero-copy">
-            <span className="label">One place to plan a vacation</span>
-            <h1>Every trip, from first idea to the flight home.</h1>
+            <span className="label">{t('One place to plan a vacation')}</span>
+            <h1>{t('Every trip, from first idea to the flight home.')}</h1>
             <p className="lead">
-              Find the flights with Skyhop, plan the days on a MyMaps AI map, and keep it all together in one Trip: dates, travelers, flights, stays
-              and the map.
+              {t('Find the flights with Skyhop, plan the days on a MyMaps AI map, and keep it all together in one Trip: dates, travelers, flights, stays and the map.')}
             </p>
             <div className="ctas">
-              <a className="btn solid" href="#/new" data-help="plan">Plan a trip</a>
-              <a className="btn" href={SKYHOP_URL}>Search flights</a>
-              <a className="btn" href={MYMAPS_URL}>Open a map</a>
+              <a className="btn solid" href="#/new" data-help="plan">{t('Plan a trip')}</a>
+              <a className="btn" href={SKYHOP_URL}>{t('Search flights')}</a>
+              <a className="btn" href={MYMAPS_URL}>{t('Open a map')}</a>
             </div>
           </div>
-          <TripPass trip={example} label="Trip · example" />
+          <TripPass trip={example} label={t('Trip · example')} />
         </section>
 
         <TripsList trips={trips} />
 
         <section id="apps">
           <div className="section-head">
-            <span className="label">The apps</span>
-            <h2>Two apps today, joined by a third piece.</h2>
+            <span className="label">{t('The apps')}</span>
+            <h2>{t('Two apps today, joined by a third piece.')}</h2>
           </div>
           <div className="board">
             {APPS.map((app) => (
@@ -241,7 +242,7 @@ function Landing({ trips }: { trips: Trip[] }) {
                 <div>
                   <h3>
                     {app.name}
-                    {app.isNew && <span className="tag">New</span>}
+                    {app.isNew && <span className="tag">{t('New')}</span>}
                   </h3>
                   <p className="muted">{app.blurb}</p>
                 </div>
@@ -256,11 +257,10 @@ function Landing({ trips }: { trips: Trip[] }) {
 
         <section id="trip">
           <div className="section-head">
-            <span className="label">Introducing Trip</span>
-            <h2>One record per vacation.</h2>
+            <span className="label">{t('Introducing Trip')}</span>
+            <h2>{t('One record per vacation.')}</h2>
             <p className="lead">
-              A Trip doesn't copy what the apps already store. It points to them. The map stays in Google Drive and the searches stay in Skyhop; the
-              Trip keeps their ids, plus everything that belongs to the trip itself.
+              {t("A Trip doesn't copy what the apps already store. It points to them. The map stays in Google Drive and the searches stay in Skyhop; the Trip keeps their ids, plus everything that belongs to the trip itself.")}
             </p>
           </div>
           <div className="model">
@@ -273,7 +273,7 @@ function Landing({ trips }: { trips: Trip[] }) {
               </dl>
               <div className="privacy">
                 <b>!</b>
-                <p className="muted">Like Skyhop, a Trip never holds card or passport details. A booking is kept as the airline's confirmation code only.</p>
+                <p className="muted">{t("Like Skyhop, a Trip never holds card or passport details. A booking is kept as the airline's confirmation code only.")}</p>
               </div>
             </div>
             <CodeTabs

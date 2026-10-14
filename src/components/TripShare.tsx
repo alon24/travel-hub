@@ -1,3 +1,4 @@
+import { t } from '../i18n.ts'
 import { useEffect, useState, type FormEvent } from 'react'
 import { hubUrl } from '../links.ts'
 import { fileOf, listPeople, shareTrip, unshare, type DriveCtx, type Person } from '../lib/tripDrive.ts'
@@ -33,7 +34,7 @@ export function TripShare({ ctx, tripId, title, from, addUser, synced }: Props) 
       setFile(f ? { id: f.fileId, mine: f.mine } : null)
       if (f) setPeople(await listPeople(ctx, f.fileId))
     } catch (e) {
-      setNote(e instanceof Error ? e.message : "Couldn't reach Google Drive.")
+      setNote(e instanceof Error ? e.message : t("Couldn't reach Google Drive."))
     }
   }
   useEffect(() => {
@@ -48,68 +49,68 @@ export function TripShare({ ctx, tripId, title, from, addUser, synced }: Props) 
   const invite = async (e: FormEvent) => {
     e.preventDefault()
     const who = email.trim().toLowerCase()
-    if (!EMAIL.test(who)) return setNote('Type their email address, e.g. dana@gmail.com')
-    if (!file) return setNote('This trip is still being saved to Google Drive. Try again in a moment.')
+    if (!EMAIL.test(who)) return setNote(t('Type their email address, e.g. dana@gmail.com'))
+    if (!file) return setNote(t('This trip is still being saved to Google Drive. Try again in a moment.'))
     setBusy(true)
     setNote('')
     try {
       await shareTrip(ctx, file.id, who)
-      let access = ' They need to be on the apps’ user list to open it; ask an admin to add them.'
+      let access = ' ' + t('They need to be on the apps’ user list to open it; ask an admin to add them.')
       if (addUser) {
         try {
           await addUser(who)
-          access = ' They can sign in to the apps now.'
+          access = ' ' + t('They can sign in to the apps now.')
         } catch {
-          access = ' Add them to the user list on the Admin page so they can sign in.'
+          access = ' ' + t('Add them to the user list on the Admin page so they can sign in.')
         }
       }
       setEmail('')
       setInvited(who)
-      setNote(`${who} can open this trip now. Send them the invite link.${access}`)
+      setNote(t('{who} can open this trip now. Send them the invite link.', { who }) + access)
       setPeople(await listPeople(ctx, file.id))
     } catch (e) {
-      setNote(e instanceof Error ? e.message : 'Could not share the trip.')
+      setNote(e instanceof Error ? e.message : t('Could not share the trip.'))
     } finally {
       setBusy(false)
     }
   }
 
   const remove = async (p: Person) => {
-    if (!file || !confirm(`Stop sharing "${title}" with ${p.email}?`)) return
+    if (!file || !confirm(t('Stop sharing "{title}" with {email}?', { title, email: p.email }))) return
     try {
       await unshare(ctx, file.id, p.id)
       setPeople((all) => all.filter((x) => x.id !== p.id))
     } catch (e) {
-      setNote(e instanceof Error ? e.message : 'Could not remove them.')
+      setNote(e instanceof Error ? e.message : t('Could not remove them.'))
     }
   }
 
   return (
     <section className="card share" aria-labelledby="sec-share">
-      <h2 id="sec-share">Plan it together</h2>
+      <h2 id="sec-share">{t('Plan it together')}</h2>
       {people.length > 0 && (
-        <ul className="people" aria-label="People on this trip">
+        <ul className="people" aria-label={t('People on this trip')}>
           {people.map((p) => (
             <li key={p.id}>
               <span className="who" title={p.email}>{p.name ?? p.email}</span>
               {p.role === 'owner' ? (
-                <span className="chip">owner</span>
+                <span className="chip">{t('owner')}</span>
               ) : file?.mine ? (
-                <button type="button" className="btn small" aria-label={`Remove ${p.email}`} onClick={() => void remove(p)}>Remove</button>
+                <button type="button" className="btn small" aria-label={t('Remove {name}', { name: p.email })} onClick={() => void remove(p)}>{t('Remove')}</button>
               ) : null}
             </li>
           ))}
         </ul>
       )}
       {file?.mine !== false && (
-        <form className="invite" onSubmit={invite} aria-label="Invite a friend" noValidate>
-          <input type="email" inputMode="email" autoComplete="email" placeholder="Friend's email" aria-label="Friend's email" value={email} onChange={(e) => setEmail(e.target.value)} />
-          <button type="submit" className="btn" disabled={busy || file === undefined}>{busy ? 'Inviting…' : 'Invite'}</button>
+        <form className="invite" onSubmit={invite} aria-label={t('Invite a friend')} noValidate>
+          <input type="email" inputMode="email" autoComplete="email" placeholder={t("Friend's email")} aria-label={t("Friend's email")} value={email} onChange={(e) => setEmail(e.target.value)} />
+          <button type="submit" className="btn" disabled={busy || file === undefined}>{busy ? t('Inviting…') : t('Invite')}</button>
         </form>
       )}
-      {file && invited && <InviteLink text={`${from} invited you to plan "${title}" together: ${sharedLink(file.id)}`} to={invited} />}
-      {file?.mine === false && <p className="hint">A friend shared this trip with you. Your changes reach them too.</p>}
-      {note ? <p className="hint" role="status">{note}</p> : file?.mine !== false && <p className="hint">They can see and edit this trip: flights, stays and days.</p>}
+      {file && invited && <InviteLink text={t('{from} invited you to plan "{title}" together: {link}', { from, title, link: sharedLink(file.id) })} to={invited} />}
+      {file?.mine === false && <p className="hint">{t('A friend shared this trip with you. Your changes reach them too.')}</p>}
+      {note ? <p className="hint" role="status">{note}</p> : file?.mine !== false && <p className="hint">{t('They can see and edit this trip: flights, stays and days.')}</p>}
     </section>
   )
 }
@@ -127,12 +128,12 @@ function InviteLink({ text, to }: { text: string; to: string }) {
     }
   }
   return (
-    <div className="invite-link" role="group" aria-label={`Invite for ${to}`}>
+    <div className="invite-link" role="group" aria-label={t('Invite for {to}', { to })}>
       <code className="mono">{text.slice(text.lastIndexOf("http"))}</code>
       <div className="row-btns">
-        {nativeShare && <button type="button" className="btn small solid" onClick={() => void navigator.share({ text }).catch(() => undefined)}>Send invite</button>}
+        {nativeShare && <button type="button" className="btn small solid" onClick={() => void navigator.share({ text }).catch(() => undefined)}>{t('Send invite')}</button>}
         <a className="btn small" href={`https://wa.me/?text=${encodeURIComponent(text)}`} target="_blank" rel="noreferrer">WhatsApp</a>
-        <button type="button" className="btn small" onClick={() => void copy()}>{copied ? 'Copied' : 'Copy link'}</button>
+        <button type="button" className="btn small" onClick={() => void copy()}>{copied ? t('Copied') : t('Copy link')}</button>
       </div>
     </div>
   )
