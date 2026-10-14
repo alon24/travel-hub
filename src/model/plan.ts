@@ -5,6 +5,7 @@ import { t } from '../i18n.ts'
  */
 import { airport, mainlandAirports } from '../data/airports.ts'
 import type { FlightsHandoff } from './handoff.ts'
+import { requestSig } from './request.ts'
 import { tripDates } from './trip.ts'
 import { TRIP_SCHEMA_VERSION, type Destination, type FlightLeg, type IsoDate, type Stay, type Traveler, type Trip, type TripDayPlan } from './types.ts'
 
@@ -65,6 +66,8 @@ export interface NewTripInput {
   countries?: string[]
   /** Any dates in this window (see Trip.flexible); startDate is ignored then */
   flexible?: { from: IsoDate; to: IsoDate }
+  /** The "Describe it" text this trip came from */
+  request?: string
 }
 
 export function makeTravelers(adults: number, childrenAges: number[] = [], keep: Traveler[] = []): Traveler[] {
@@ -106,7 +109,9 @@ export function createTrip(input: NewTripInput, now = new Date()): Trip {
     createdAt: now.toISOString(),
     updatedAt: now.toISOString(),
   }
-  return { ...base, days: buildDays(base) }
+  const trip = { ...base, days: buildDays(base) }
+  const original = input.request?.trim()
+  return original ? { ...trip, request: { original, sig: requestSig(trip) } } : trip
 }
 
 /** The night a traveler first needs a bed: an arrival after midnight still counts as the evening before. */

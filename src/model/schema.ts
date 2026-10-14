@@ -93,6 +93,7 @@ export const tripSchema = z
     budget: z
       .object({ currency: z.string().length(3), planned: z.number().min(0).optional(), spent: z.number().min(0).optional() })
       .optional(),
+    request: z.object({ original: z.string().min(1), current: z.string().optional(), sig: z.string() }).optional(),
     notes: z.string(),
     createdAt: isoDateTime,
     updatedAt: isoDateTime,

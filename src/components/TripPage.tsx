@@ -8,6 +8,7 @@ import { mapDocFromTrip, mymapsImportUrl } from '../model/mymaps.ts'
 import { addStay, adultsOf, bookingUrl, flightTotal, removeStay, setStayDates, skyhopSearchUrl, stayCoverage, stayDatesError, staySearchLinks, stayTotal, type Coverage } from '../model/plan.ts'
 import { dayLabel, tripNights } from '../model/trip.ts'
 import type { FlightLeg, Trip } from '../model/types.ts'
+import { requestIsStale, requestSig } from '../model/request.ts'
 import { DayTabs } from './DayTabs.tsx'
 import { TripPass } from './TripPass.tsx'
 
@@ -24,6 +25,8 @@ interface Props {
   share?: ReactNode
   /** AI ideas for a day's city (DayTabs); only when the AI is available */
   suggest?: ComponentProps<typeof DayTabs>['suggest']
+  /** Rewrites the request text to match the trip as it is now (the AI); the update button is hidden without it */
+  rewrite?: (text: string, trip: Trip) => Promise<string>
 }
 
 const fmtDay = dayLabel
@@ -31,7 +34,7 @@ const fmtTime = (t: string) => t.slice(11, 16)
 const money = (n: number, currency = 'ILS') => new Intl.NumberFormat('en-GB', { style: 'currency', currency, maximumFractionDigits: 0 }).format(n)
 
 /** Everything about one trip, with the next step always one tap away. */
-export function TripPage({ trip, onChange, onDelete, navigate = (u) => window.location.assign(u), geocoder = geocode, hotelFinder = findHotels, share, suggest }: Props) {
+export function TripPage({ trip, onChange, onDelete, navigate = (u) => window.location.assign(u), geocoder = geocode, hotelFinder = findHotels, share, suggest, rewrite }: Props) {
   const coverage = stayCoverage(trip)
   const openNights = coverage.reduce((n, c) => n + c.open.length, 0)
   const currency = trip.budget?.currency ?? 'ILS'
@@ -59,6 +62,7 @@ export function TripPage({ trip, onChange, onDelete, navigate = (u) => window.lo
             <div><span className="label">{t('Per person')}</span><b className="mono">{money(total / people, currency)}</b></div>
             <p className="hint">{t('Flights {a} · stays {b} · {who}', { a: money(flightTotal(trip), currency), b: money(stayTotal(trip), currency), who: plural(people, 'traveler') })}</p>
           </section>
+          <RequestCard trip={trip} onChange={onChange} rewrite={rewrite} />
           {share}
           <button type="button" className="btn small danger" onClick={() => confirm(t('Delete "{title}"?', { title: trip.title })) && onDelete()}>{t('Delete trip')}</button>
         </div>
@@ -106,6 +110,57 @@ export function TripPage({ trip, onChange, onDelete, navigate = (u) => window.lo
         </div>
       </div>
     </div>
+  )
+}
+
+/** "Your request": the text the trip was created from, kept in step with later edits (the AI only suggests; you save). */
+function RequestCard({ trip, onChange, rewrite }: { trip: Trip; onChange: (t: Trip) => void; rewrite?: Props['rewrite'] }) {
+  const [draft, setDraft] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const req = trip.request
+  if (!req) return null
+  const shown = req.current ?? req.original
+  const stale = requestIsStale(trip)
+  const save = (current: string | undefined) => {
+    onChange({ ...trip, request: { ...req, ...(current !== undefined ? { current } : {}), sig: requestSig(trip) } })
+    setDraft(null)
+  }
+  const suggest = async () => {
+    setBusy(true)
+    setError('')
+    try {
+      setDraft(await rewrite!(shown, trip))
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t('The AI is not available right now.'))
+    } finally {
+      setBusy(false)
+    }
+  }
+  return (
+    <section className="card request" aria-label={t('Your request')}>
+      <span className="label">{t('Your request')}</span>
+      {draft === null ? <p className="request-text">{shown}</p> : (
+        <>
+          <textarea aria-label={t('New request text')} rows={3} maxLength={500} value={draft} onChange={(e) => setDraft(e.target.value)} />
+          <div className="sec-actions">
+            <button type="button" className="btn small solid" disabled={!draft.trim()} onClick={() => save(draft.trim())}>{t('Save')}</button>
+            <button type="button" className="btn small" onClick={() => setDraft(null)}>{t('Cancel')}</button>
+          </div>
+        </>
+      )}
+      {stale && draft === null && (
+        <p className="hint" role="status">
+          {t('You changed the trip since this was written.')}{' '}
+          {rewrite && <button type="button" className="btn small" disabled={busy} onClick={() => void suggest()}>{busy ? t('Rewriting…') : t('Update the request')}</button>}{' '}
+          <button type="button" className="btn small" onClick={() => save(undefined)}>{t('Keep as is')}</button>
+        </p>
+      )}
+      {error && <p className="form-error" role="alert">{error}</p>}
+      {req.current && req.current !== req.original && (
+        <details><summary>{t('What you first wrote')}</summary><p className="request-text">{req.original}</p></details>
+      )}
+    </section>
   )
 }
 

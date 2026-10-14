@@ -35,6 +35,8 @@ export function NewTrip({ onCreate, draft, today = new Date().toISOString().slic
   const [wish, setWish] = useState('')
   const [drafting, setDrafting] = useState(false)
   const [note, setNote] = useState('')
+  // The sentence the form was filled from; kept on the trip so it can be shown (and rewritten) later
+  const [request, setRequest] = useState('')
 
   // The AI only fills the form; nothing is created until you press Create trip
   const fillIn = async () => {
@@ -43,6 +45,7 @@ export function NewTrip({ onCreate, draft, today = new Date().toISOString().slic
     setNote('')
     try {
       const d = await draft(wish)
+      setRequest(wish.trim())
       if (d.places.length) setPlaces(d.places)
       setCountries(d.countries ?? [])
       if (d.home) setFrom(`${findAirport(d.home)?.city} (${d.home})`)
@@ -86,7 +89,7 @@ export function NewTrip({ onCreate, draft, today = new Date().toISOString().slic
     if (!home) return setError(t('Where do you fly from? Pick a city or airport code.'))
     if (!places.length) return setError(t('Add at least one place to go.'))
     if (flexible && addDays(flexible.from, nights) > flexible.to) return setError(t("{n} nights don't fit between {from} and {to}. Move \"Back by\" later.", { n: nights, from: flexible.from, to: flexible.to }))
-    onCreate(createTrip({ title, home: home.code, destinations: places.map((code, i) => ({ code, nights: split?.[i] })), startDate: start, nights, adults, countries: wholeCountries, ...(flexible ? { flexible } : {}) }))
+    onCreate(createTrip({ title, home: home.code, destinations: places.map((code, i) => ({ code, nights: split?.[i] })), startDate: start, nights, adults, countries: wholeCountries, ...(flexible ? { flexible } : {}), ...(request ? { request } : {}) }))
   }
 
   return (

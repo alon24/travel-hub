@@ -27,6 +27,19 @@ describe('TripPage', () => {
     expect(url.searchParams.get('trip')).toBe(idea.id)
   })
 
+  it('offers to rewrite the request after the trip changed, and saves only what you confirm', async () => {
+    const asked = createTrip({ home: 'TLV', destinations: [{ code: 'LIS' }, { code: 'OPO' }], startDate: '2026-11-16', nights: 4, adults: 2, request: '4 nights in Lisbon and Porto' }, NOW)
+    const edited = { ...asked, travelers: asked.travelers.slice(0, 1) }
+    const onChange = vi.fn()
+    const rewrite = vi.fn(async () => '4 nights in Lisbon and Porto, just me')
+    render(<TripPage trip={edited} onChange={onChange} onDelete={vi.fn()} rewrite={rewrite} />)
+    await userEvent.click(screen.getByRole('button', { name: 'Update the request' }))
+    expect(onChange).not.toHaveBeenCalled()
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }))
+    const saved = onChange.mock.calls[0][0] as Trip
+    expect(saved.request).toMatchObject({ original: '4 nights in Lisbon and Porto', current: '4 nights in Lisbon and Porto, just me' })
+  })
+
   it('suggests places for the day and adds the one you pick', async () => {
     const onChange = vi.fn()
     const suggest = vi.fn(async () => [{ name: 'Belém Tower', note: 'Riverside fort' }])
