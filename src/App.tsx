@@ -14,7 +14,7 @@ import { TripShare } from './components/TripShare.tsx'
 import { SharedTrip } from './components/SharedTrip.tsx'
 import { pickFile } from './auth/picker.ts'
 import { TripsList } from './components/TripsList.tsx'
-import { GITHUB_URL, MYMAPS_URL, SKYHOP_URL } from './links.ts'
+import { GITHUB_URL, MYMAPS_URL, SKYHOP_APK_URL, SKYHOP_URL } from './links.ts'
 import { AccountApi, type Role } from './lib/account.ts'
 import { aiEnabled } from './lib/ai.ts'
 import { draftTrip } from './lib/planAi.ts'
@@ -255,6 +255,10 @@ function Landing({ trips }: { trips: Trip[] }) {
               </div>
             ))}
           </div>
+          <p className="apk">
+            <a className="btn" href={SKYHOP_APK_URL} download>{t('Skyhop for Android (APK)')}</a>
+            <span className="muted">{t('Open the file on your phone and allow installs from this source. Download it again when there is a newer version.')}</span>
+          </p>
         </section>
 
         <section id="trip">
