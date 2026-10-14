@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
+import { useEffect, useState, type ComponentProps, type FormEvent, type ReactNode } from 'react'
 import { airport } from '../data/airports.ts'
 import { geocode } from '../lib/geocode.ts'
 import { findHotels, type Hotel, type HotelKind } from '../lib/hotels.ts'
@@ -21,6 +21,8 @@ interface Props {
   hotelFinder?: typeof findHotels
   /** Planning it with friends (TripShare); only when signed in to Drive */
   share?: ReactNode
+  /** AI ideas for a day's city (DayTabs); only when the AI is available */
+  suggest?: ComponentProps<typeof DayTabs>['suggest']
 }
 
 const fmtDay = dayLabel
@@ -29,7 +31,7 @@ const money = (n: number, currency = 'ILS') => new Intl.NumberFormat('en-GB', { 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
 
 /** Everything about one trip, with the next step always one tap away. */
-export function TripPage({ trip, onChange, onDelete, navigate = (u) => window.location.assign(u), geocoder = geocode, hotelFinder = findHotels, share }: Props) {
+export function TripPage({ trip, onChange, onDelete, navigate = (u) => window.location.assign(u), geocoder = geocode, hotelFinder = findHotels, share, suggest }: Props) {
   const coverage = stayCoverage(trip)
   const openNights = coverage.reduce((n, c) => n + c.open.length, 0)
   const currency = trip.budget?.currency ?? 'ILS'
@@ -91,7 +93,7 @@ export function TripPage({ trip, onChange, onDelete, navigate = (u) => window.lo
 
           <section className={`card sec ${step === 'map' ? 'next' : ''}`} aria-labelledby="sec-days">
             <h2 id="sec-days"><span className="num">3</span>Day by day <span className="chip src"><span className="dot dot--map" />MyMaps AI</span></h2>
-            <DayTabs trip={trip} onChange={onChange} />
+            <DayTabs trip={trip} onChange={onChange} suggest={suggest} />
             <div className="sec-actions">
               <button type="button" className={`btn ${step === 'map' ? 'solid' : ''}`} onClick={openMap}>
                 {trip.apps.mymaps ? 'Open the map in MyMaps AI →' : 'Plan the days on a map →'}

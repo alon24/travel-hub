@@ -17,6 +17,7 @@ import { GITHUB_URL, MYMAPS_URL, SKYHOP_URL } from './links.ts'
 import { AccountApi, type Role } from './lib/account.ts'
 import { aiEnabled } from './lib/ai.ts'
 import { draftTrip } from './lib/planAi.ts'
+import { suggestPlaces } from './lib/placesAi.ts'
 import { env } from './env.ts'
 import { go, useRoute } from './lib/route.ts'
 import { deleteTrip, forgetDeleted, getTrip, listTrips, onTripsChange, putTrips, saveTrip } from './lib/tripStore.ts'
@@ -176,6 +177,7 @@ export default function App({ account, onSignOut, driveFetch, firstRunHelp = imp
           <TripPage
             trip={trip}
             onChange={saveTrip}
+            suggest={token && aiEnabled() ? (city, have) => suggestPlaces(city, have, { googleToken: token }) : undefined}
             onDelete={() => { deleteTrip(trip.id); go('#/') }}
             share={drive && account ? (
               <TripShare ctx={drive} tripId={trip.id} title={trip.title} from={account.name ?? account.email} synced={sync.kind === 'synced'} addUser={adminApi ? (email) => adminApi.addUser(email, 'user') : undefined} />

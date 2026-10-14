@@ -326,3 +326,6 @@ input:focus-visible,textarea:focus-visible{outline:2px solid var(--sky);outline-
 .place-form{display:flex;gap:6px;margin:8px 0}
 .place-form input{flex:1;min-width:0}
 @media (max-width:560px){.places li{grid-template-columns:24px 1fr}.places li .h-actions{grid-column:2}}
+.ideas{margin:8px 0}
+.ideas ul{list-style:none;margin:8px 0;padding:0;display:grid;gap:4px}
+.ideas li{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:6px 0;border-bottom:1px dashed var(--line)}
