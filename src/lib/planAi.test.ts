@@ -91,6 +91,11 @@ describe('a list or range of nights is "3 or 4", not one number per city', () =>
     ['3 or 4 nights', 3, 4],
     ['4–3 days in Lisbon', 2, 3],
     ['3-4 לילות בליסבון', 3, 4],
+    ['3 ,4 nights in portugal , next month', 3, 4],
+    ['3, 4 nights', 3, 4],
+    ['3 nights or 4 nights in Lisbon', 3, 4],
+    ['3 and 4 nights', 3, 4],
+    ['3 או 4 לילות', 3, 4],
   ])('%s', (text, min, max) => expect(nightsRange(text)).toEqual({ min, max }))
 
   it('not for nights per named city', () => {
@@ -102,6 +107,12 @@ describe('a list or range of nights is "3 or 4", not one number per city', () =>
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ choices: [{ message: { content: '{"to":["LIS","OPO"],"countries":["PT"],"split":[3,4],"month":11}' } }] }))))
     const d = await draftTrip('3,4 nights in portugal next month 4 people', today, { googleToken: 'g' }, { VITE_WORKER_URL: 'https://w.example.dev' })
     expect(d).toMatchObject({ places: ['LIS', 'OPO'], nights: 3, nightsMax: 4, split: undefined, window: { from: '2026-11-01', to: '2026-11-30' } })
+  })
+})
+
+describe('children', () => {
+  it('"4 people, 1 is a 16 yo child" arrives as 3 adults and a child of 16', () => {
+    expect(readPlanReply('{"to":["LIS"],"adults":3,"childrenAges":[16]}', today)).toMatchObject({ adults: 3, childrenAges: [16] })
   })
 })
 

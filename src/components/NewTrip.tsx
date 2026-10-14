@@ -32,6 +32,8 @@ export function NewTrip({ onCreate, draft, today = new Date().toISOString().slic
   const [countries, setCountries] = useState<string[]>([])
   const wholeCountries = countries.filter((c) => places.some((p) => findAirport(p)?.country === c))
   const [adults, setAdults] = useState(2)
+  // Children's ages from the AI ("4 people, 1 is 16"); they count in Travelers but search as children
+  const [kids, setKids] = useState<number[]>([])
   const [title, setTitle] = useState('')
   const [error, setError] = useState('')
   const [wish, setWish] = useState('')
@@ -56,7 +58,8 @@ export function NewTrip({ onCreate, draft, today = new Date().toISOString().slic
       if (d.nights) setNights(d.nights)
       setNightsMax(d.nightsMax)
       setSplit(d.split)
-      if (d.adults) setAdults(d.adults)
+      setKids(d.childrenAges ?? [])
+      if (d.adults || d.childrenAges?.length) setAdults(d.adults ?? Math.max(1, 2 - (d.childrenAges?.length ?? 0)))
       if (d.title) setTitle(d.title)
       setError('')
       setNote(
@@ -93,7 +96,7 @@ export function NewTrip({ onCreate, draft, today = new Date().toISOString().slic
     if (!home) return setError(t('Where do you fly from? Pick a city or airport code.'))
     if (!places.length) return setError(t('Add at least one place to go.'))
     if (flexible && addDays(flexible.from, nightsMax ?? nights) > flexible.to) return setError(t("{n} nights don't fit between {from} and {to}. Move \"Back by\" later.", { n: nightsMax ?? nights, from: flexible.from, to: flexible.to }))
-    onCreate(createTrip({ title, home: home.code, destinations: places.map((code, i) => ({ code, nights: split?.[i] })), startDate: start, nights, adults, ...(nightsMax ? { nightsMax } : {}), countries: wholeCountries, ...(flexible ? { flexible } : {}), ...(request ? { request } : {}) }))
+    onCreate(createTrip({ title, home: home.code, destinations: places.map((code, i) => ({ code, nights: split?.[i] })), startDate: start, nights, adults, ...(kids.length ? { childrenAges: kids } : {}), ...(nightsMax ? { nightsMax } : {}), countries: wholeCountries, ...(flexible ? { flexible } : {}), ...(request ? { request } : {}) }))
   }
 
   return (
@@ -194,8 +197,9 @@ export function NewTrip({ onCreate, draft, today = new Date().toISOString().slic
       <div className="row">
         <Stepper id="nt-nights" label={nightsMax ? t('Nights, from') : t('Nights')} value={nights} min={1} max={30} onChange={(n) => { setNights(n); setSplit(undefined); if (nightsMax && nightsMax <= n) setNightsMax(Math.min(30, n + 1)) }} />
         {nightsMax && <Stepper id="nt-nights-max" label={t('Nights, up to')} value={nightsMax} min={Math.min(30, nights + 1)} max={30} onChange={setNightsMax} />}
-        <Stepper id="nt-adults" label={t('Travelers')} value={adults} min={1} max={9} onChange={setAdults} />
+        <Stepper id="nt-adults" label={t('Travelers')} value={adults + kids.length} min={kids.length + 1} max={9} onChange={(n) => setAdults(n - kids.length)} />
       </div>
+      {kids.length > 0 && <p className="hint" role="note">{t('Travelers include {n} child, age {ages}.', { n: kids.length, ages: kids.join(', ') })}</p>}
       <label className="hint flex-toggle">
         <input type="checkbox" checked={Boolean(nightsMax)} onChange={(e) => setNightsMax(e.target.checked ? Math.min(30, nights + 1) : undefined)} />{' '}
         {t('Compare a range of nights (for example 3 and 4)')}
