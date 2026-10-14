@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { draftTrip, monthWindow, planSystem, readPlanReply } from './planAi.ts'
+import { draftTrip, monthWindow, nightsRange, planSystem, readPlanReply } from './planAi.ts'
 
 const today = '2026-10-11'
 afterEach(() => vi.unstubAllGlobals())
@@ -81,6 +81,27 @@ describe('draftTrip', () => {
     expect(body.system).toContain('LIS Lisbon')
     expect(body.system.length).toBeLessThan(2500)
     expect(body.messages).toEqual([{ role: 'user', content: '3 nights in Lisbon' }])
+  })
+})
+
+describe('a list or range of nights is "3 or 4", not one number per city', () => {
+  it.each([
+    ['3,4 nights in portugal next month 4 people', 3, 4],
+    ['3-4 nights in Portugal', 3, 4],
+    ['3 or 4 nights', 3, 4],
+    ['4–3 days in Lisbon', 2, 3],
+    ['3-4 לילות בליסבון', 3, 4],
+  ])('%s', (text, min, max) => expect(nightsRange(text)).toEqual({ min, max }))
+
+  it('not for nights per named city', () => {
+    expect(nightsRange('3 nights in Lisbon, 4 nights in Porto')).toBeUndefined()
+    expect(nightsRange('3 in Lisbon, 4 in Porto')).toBeUndefined()
+  })
+
+  it('wins over an AI that read "3,4 nights" as Lisbon 3 + Porto 4', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ choices: [{ message: { content: '{"to":["LIS","OPO"],"countries":["PT"],"split":[3,4],"month":11}' } }] }))))
+    const d = await draftTrip('3,4 nights in portugal next month 4 people', today, { googleToken: 'g' }, { VITE_WORKER_URL: 'https://w.example.dev' })
+    expect(d).toMatchObject({ places: ['LIS', 'OPO'], nights: 3, nightsMax: 4, split: undefined, window: { from: '2026-11-01', to: '2026-11-30' } })
   })
 })
 

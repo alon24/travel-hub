@@ -35,6 +35,8 @@ export interface Trip {
    * Skyhop searches the whole window, and picking flights fixes the dates and drops this.
    */
   flexible?: { from: IsoDate; to: IsoDate }
+  /** "3 or 4 nights": the trip is startDate..endDate (the fewest nights) but flights are compared for every length up to this many nights */
+  nightsMax?: number
   /** Home airport, where the trip starts and ends */
   home: Iata
 

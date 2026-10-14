@@ -137,6 +137,15 @@ describe('skyhopSearchUrl', () => {
   })
 })
 
+describe('skyhopSearchUrl: nights range', () => {
+  it('sends "3-4" so both lengths are searched', () => {
+    const t = createTrip({ home: 'TLV', destinations: [{ code: 'LIS' }], startDate: '2026-11-18', nights: 3, nightsMax: 4, adults: 2 })
+    const q = new URL(skyhopSearchUrl(t, 'https://x.test/sky/', 'https://x.test/hub/')).searchParams
+    expect(q.get('nights')).toBe('3-4')
+    expect(q.get('end')).toBe('2026-11-25')  // 18 Nov + 4 nights + 3 days of slack
+  })
+})
+
 describe('skyhopSearchUrl: which airports', () => {
   const params = (input: Partial<Parameters<typeof createTrip>[0]>) =>
     Object.fromEntries(new URL(skyhopSearchUrl(createTrip({ home: 'TLV', destinations: [{ code: 'LIS' }], startDate: '2026-11-16', nights: 4, adults: 2, ...input }, NOW), 'https://x.test/sky/', 'https://x.test/hub/')).searchParams)

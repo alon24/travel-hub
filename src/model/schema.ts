@@ -79,6 +79,7 @@ export const tripSchema = z
     startDate: isoDate,
     endDate: isoDate,
     flexible: z.object({ from: isoDate, to: isoDate }).optional(),
+    nightsMax: z.number().int().min(2).max(60).optional(),
     home: iata,
     travelers: z.array(traveler),
     destinations: z.array(destination),

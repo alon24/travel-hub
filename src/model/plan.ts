@@ -60,6 +60,8 @@ export interface NewTripInput {
   destinations: { code: string; name?: string; nights?: number }[]
   startDate: IsoDate
   nights: number
+  /** Compare every length from `nights` up to this ("3-4 nights"); ignored unless bigger than `nights` */
+  nightsMax?: number
   adults: number
   childrenAges?: number[]
   /** Countries asked for as a whole, so flights search all their airports */
@@ -97,6 +99,7 @@ export function createTrip(input: NewTripInput, now = new Date()): Trip {
     startDate: input.startDate,
     endDate,
     ...(input.flexible ? { flexible: input.flexible } : {}),
+    ...(input.nightsMax && input.nightsMax > input.nights ? { nightsMax: input.nightsMax } : {}),
     home: input.home,
     travelers: makeTravelers(input.adults, input.childrenAges),
     destinations,
@@ -212,6 +215,7 @@ export function applyFlights(trip: Trip | undefined, h: FlightsHandoff, now = ne
     ...base,
     // Real flights fix the dates, so the trip stops being flexible
     flexible: undefined,
+    nightsMax: undefined,
     status: base.status === 'idea' ? 'planning' : base.status,
     startDate,
     endDate,
@@ -315,14 +319,16 @@ export function skyhopSearchUrl(trip: Trip, skyhopUrl: string, hub: string, flex
   const to = endAirports(trip, trip.destinations.find((d) => d.airport))
   const back = endAirports(trip, trip.destinations.findLast((d) => d.airport))
   const nights = Math.round((Date.parse(trip.endDate) - Date.parse(trip.startDate)) / DAY_MS)
+  // "3 or 4 nights" goes as a range; Skyhop searches every length in it
+  const longest = Math.max(nights, trip.nightsMax ?? 0)
   const q = new URLSearchParams({
     from: trip.home,
     to: to.join(','),
     // Skyhop flies home from any of the "to" airports already; "back" is only needed when the trip ends elsewhere
     ...(back.some((a) => !to.includes(a)) ? { back: back.join(',') } : {}),
     start: trip.flexible?.from ?? addDays(trip.startDate, -flex),
-    end: trip.flexible?.to ?? addDays(trip.endDate, flex),
-    nights: String(nights),
+    end: trip.flexible?.to ?? addDays(trip.startDate, longest + flex),
+    nights: longest > nights ? `${nights}-${longest}` : String(nights),
     adults: String(adultsOf(trip)),
     ...(childAges(trip).length ? { children: childAges(trip).join(',') } : {}),
     trip: trip.id,
