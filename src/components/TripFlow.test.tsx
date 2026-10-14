@@ -27,6 +27,16 @@ describe('TripPage', () => {
     expect(url.searchParams.get('trip')).toBe(idea.id)
   })
 
+  it('suggests places for the day and adds the one you pick', async () => {
+    const onChange = vi.fn()
+    const suggest = vi.fn(async () => [{ name: 'Belém Tower', note: 'Riverside fort' }])
+    render(<TripPage trip={withFlights} onChange={onChange} onDelete={vi.fn()} suggest={suggest} />)
+    await userEvent.click(screen.getByRole('button', { name: /Suggest places in/ }))
+    await userEvent.click(await screen.findByRole('button', { name: 'Add Belém Tower' }))
+    expect(onChange.mock.calls[0][0].days.some((d: Trip['days'][number]) => d.places?.some((p) => p.name === 'Belém Tower'))).toBe(true)
+    expect(screen.queryByRole('button', { name: 'Add Belém Tower' })).toBeNull()
+  })
+
   it('adds a hotel for the open nights, pinned on the map', async () => {
     const onChange = vi.fn()
     const geocoder = vi.fn(async () => [-9.13, 38.71] as [number, number])
