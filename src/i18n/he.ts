@@ -31,6 +31,9 @@ export const HE: Record<string, string> = {
   'Open a map': 'פתיחת מפה',
   'Trip · example': 'טיול · דוגמה',
   'The apps': 'האפליקציות',
+  'Skyhop for Android (APK)': 'Skyhop לאנדרואיד (APK)',
+  'Open the file on your phone and allow installs from this source. Download it again when there is a newer version.':
+    'פותחים את הקובץ בטלפון ומאשרים התקנה ממקור זה. מורידים שוב כשיש גרסה חדשה.',
   'Two apps today, joined by a third piece.': 'שתי אפליקציות היום, ופריט שלישי שמחבר ביניהן.',
   New: 'חדש',
   'Introducing Trip': 'מכירים את "טיול"',
