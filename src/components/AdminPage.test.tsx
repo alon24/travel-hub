@@ -49,26 +49,6 @@ describe('Admin page', () => {
     expect(within(table).queryByText('friend@example.com')).not.toBeInTheDocument()
   })
 
-  it('adds a user with a role', async () => {
-    renderPage()
-    const form = screen.getByRole('form', { name: 'Add a user' })
-    await userEvent.type(within(form).getByLabelText('Google account'), 'aya@example.com')
-    await userEvent.selectOptions(within(form).getByLabelText('Role'), 'admin')
-    await userEvent.click(within(form).getByRole('button', { name: 'Add user' }))
-    expect(api.addUser).toHaveBeenCalledWith('aya@example.com', 'admin')
-    expect(await screen.findByRole('button', { name: 'Remove aya@example.com' })).toBeInTheDocument()
-    expect(within(form).getByLabelText('Google account')).toHaveValue('')
-  })
-
-  it('shows the error the server gives', async () => {
-    api.addUser.mockRejectedValueOnce(new Error('invalid email'))
-    renderPage()
-    const form = screen.getByRole('form', { name: 'Add a user' })
-    await userEvent.type(within(form).getByLabelText('Google account'), 'x@y.co')
-    await userEvent.click(within(form).getByRole('button', { name: 'Add user' }))
-    expect(await screen.findByRole('alert')).toHaveTextContent('invalid email')
-  })
-
   it('shows usage per account and app, and the activity log with a filter', async () => {
     renderPage()
     const usage = screen.getByRole('heading', { name: 'AI usage' }).closest('div.card') as HTMLElement

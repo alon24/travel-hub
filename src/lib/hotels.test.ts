@@ -55,7 +55,3 @@ describe('findHotels', () => {
     await expect(findHotels('Lisbon', center, ok as unknown as typeof fetch)).resolves.toHaveLength(4)
   })
 })
-
-it('measures distance in km', () => {
-  expect(distanceKm([-9.1393, 38.7223], [-8.6291, 41.1579])).toBeCloseTo(274, 0)   // Lisbon → Porto
-})

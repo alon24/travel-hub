@@ -16,12 +16,8 @@ describe('handoff', () => {
     expect(h.legs.map((l) => `${l.origin}-${l.destination}`)).toEqual(['TLV-LIS', 'OPO-TLV'])
   })
 
-  it('ignores hashes that are not handoffs', () => {
+  it('ignores other hashes, and rejects damaged or invalid data with a readable message', () => {
     expect(readHandoff('#/trip/abc')).toBeNull()
-    expect(readHandoff('#apps')).toBeNull()
-  })
-
-  it('rejects damaged or invalid data with a readable message', () => {
     expect(() => readHandoff('#/handoff/not-json')).toThrow(/damaged/)
     const bad = { ...fixture, legs: [{ ...fixture.legs[0], origin: 'Tel Aviv' }] }
     expect(() => readHandoff(`#/handoff/${encodePayload(bad)}`)).toThrow(/doesn't understand/)

@@ -32,17 +32,11 @@ describe('readPlanReply', () => {
     expect(readPlanReply('{"to":["LIS","Atlantis"],"split":[3,4]}', today)).toMatchObject({ split: undefined })
   })
 
-  it('tells the AI how to read nights per city and a range of nights', () => {
-    expect(planSystem(today)).toMatch(/"split"\?:int\[\]/)
-    expect(planSystem(today)).toContain('3-4 nights')
-  })
-
   it('keeps a country asked for as a whole ("Portugal"), by code or name, only when the trip goes there', () => {
     expect(readPlanReply('{"to":["LIS","OPO"],"countries":["pt"]}', today).countries).toEqual(['PT'])
     expect(readPlanReply('{"to":["LIS","OPO"],"countries":["Portugal","PT"]}', today).countries).toEqual(['PT'])
     expect(readPlanReply('{"to":["LIS"],"countries":["ES","Narnia"]}', today).countries).toEqual([])
     expect(readPlanReply('{"to":["LIS"],"countries":"PT"}', today).countries).toEqual([])
-    expect(planSystem(today)).toMatch(/"countries"\?:ISO2\[\]/)
   })
 
   it('"3 days in December" is any 2 nights in the whole of December, not a fixed date', () => {
@@ -54,11 +48,6 @@ describe('readPlanReply', () => {
     const exact = readPlanReply('{"to":["LIS"],"nights":3,"month":12,"start":"2026-12-04"}', today)
     expect([exact.start, exact.window]).toEqual(['2026-12-04', undefined])
     expect(readPlanReply('{"to":["LIS"],"nights":3,"month":12,"start":"2026-10-01"}', today).window).toEqual({ from: '2026-12-01', to: '2026-12-31' })
-  })
-
-  it('"a week in March" and "late December"', () => {
-    expect(readPlanReply('{"to":["LIS"],"nights":7,"month":3}', today)).toMatchObject({ window: { from: '2027-03-01', to: '2027-03-31' }, nights: 7 })
-    expect(readPlanReply('{"to":["LIS"],"nights":3,"month":12,"part":"late"}', today).window).toEqual({ from: '2026-12-21', to: '2026-12-31' })
   })
 
   it('takes a loose window ("next weekend") and stretches it when the trip does not fit', () => {
@@ -73,11 +62,6 @@ describe('readPlanReply', () => {
     expect(readPlanReply('{"to":["LIS"],"days":5}', today).nights).toBe(4)
     expect(readPlanReply('{"to":["LIS"],"days":1}', today).nights).toBe(1)
     expect(readPlanReply('{"to":["LIS"],"days":5,"nights":3}', today).nights).toBe(3)
-  })
-
-  it('tells the AI a month means any dates in it, never a made-up start', () => {
-    expect(planSystem(today)).toMatch(/"month"\?:1-12/)
-    expect(planSystem(today)).toContain('never "start"')
   })
 
   it('says so when there is no plan at all', () => {

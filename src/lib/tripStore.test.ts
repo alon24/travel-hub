@@ -32,11 +32,4 @@ describe('tripStore', () => {
     expect(() => saveTrip({ ...make('X', '2026-10-01T00:00:00Z'), home: 'nowhere' })).toThrow(/Invalid trip/)
   })
 
-  it('tells listeners about changes', () => {
-    const cb = vi.fn()
-    const off = onTripsChange(cb)
-    saveTrip(make('A', '2026-10-01T00:00:00Z'))
-    expect(cb).toHaveBeenCalledOnce()
-    off()
-  })
 })

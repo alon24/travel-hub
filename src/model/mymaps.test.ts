@@ -22,12 +22,11 @@ describe('mapDocFromTrip', () => {
     expect(days.every((l) => l.style === 'numbered' && l.features.length === 0)).toBe(true)
   })
 
-  it('links the trip to the map and its day layers', () => {
+  it('links the trip to the map and its day layers, reusing the ids next time', () => {
     expect(linked.apps.mymaps?.mapId).toBe(doc.id)
     expect(linked.days.map((d) => d.mapLayerId)).toEqual(doc.layers.slice(1).map((l) => l.id))
-  })
 
-  it('reuses the same map id and layer ids next time', () => {
+    // and reuses the same map id and layer ids next time
     const again = mapDocFromTrip(linked).doc
     expect(again.id).toBe(doc.id)
     expect(again.layers.slice(1).map((l) => l.id)).toEqual(doc.layers.slice(1).map((l) => l.id))

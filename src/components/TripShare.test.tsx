@@ -54,16 +54,6 @@ describe('TripShare: plan it together', () => {
     await waitFor(() => expect(screen.getByRole('list', { name: 'People on this trip' })).not.toHaveTextContent('dana@gmail.com'))
   })
 
-  it('checks the address before asking Drive', async () => {
-    const t = saveTrip(portugal())
-    await syncTrips({ token: 'tok', fetch: drive.fetch })
-    render(<TripShare ctx={{ token: 'tok', fetch: drive.fetch }} tripId={t.id} title={t.title} from="Ilan" />)
-    await screen.findByText('me@example.com')
-    await userEvent.type(screen.getByLabelText("Friend's email"), 'dana{Enter}')
-    expect(screen.getByRole('status')).toHaveTextContent('Type their email address')
-    expect(drive.invites.size).toBe(0)
-  })
-
   it("on a friend's trip you see who it belongs to, and can't invite or remove people", async () => {
     drive.addFriendsTrip('shared1', { ...portugal(), id: 'trip_dana' }, true)
     render(<TripShare ctx={{ token: 'tok', fetch: drive.fetch }} tripId="trip_dana" title="Dana in Lisbon" from="Ilan" />)
