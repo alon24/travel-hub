@@ -304,15 +304,16 @@ export function staySearchLinks(trip: Pick<Trip, 'travelers'>, d: Pick<Destinati
  * (or the trip's whole flexible window, e.g. all of December), the trip's length, and open-jaw when the trip ends somewhere else. `hub` is where Skyhop sends the flights back.
  */
 /**
- * Airports to fly into (or home from) for the stop at one end of the trip: every trip airport in that stop's
- * country, plus all the mainland airports when the person asked for the whole country ("Portugal" → LIS, OPO, FAO).
+ * Airports to fly into (or home from) for the stop at one end of the trip: just that stop, unless the person asked
+ * for its whole country ("Portugal" → LIS, OPO, FAO), then every trip airport there plus all the mainland ones.
+ * Otherwise Lisbon-then-Porto would search Porto arrivals too and lose the open-jaw.
  */
 function endAirports(trip: Pick<Trip, 'destinations' | 'countries'>, stop: Destination | undefined): string[] {
   if (!stop?.airport) return []
   const country = stop.country ?? airport(stop.airport)?.country
+  if (!country || !trip.countries?.includes(country)) return [stop.airport]
   const inCountry = trip.destinations.filter((d) => d.airport && (d.country ?? airport(d.airport)?.country) === country).map((d) => d.airport!)
-  const whole = country && trip.countries?.includes(country) ? mainlandAirports(country) : []
-  return [...new Set([stop.airport, ...inCountry, ...whole])]
+  return [...new Set([stop.airport, ...inCountry, ...mainlandAirports(country)])]
 }
 
 export function skyhopSearchUrl(trip: Trip, skyhopUrl: string, hub: string, flex = 3): string {
