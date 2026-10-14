@@ -31,7 +31,7 @@ export function TripPass({ trip, label }: { trip: Trip; label?: string }) {
               <div><dt className="label">{t('Return')}</dt><dd>{passDate(trip.endDate)}</dd></div>
             </>
           )}
-          <div><dt className="label">{t('Nights')}</dt><dd>{tripNights(trip)}</dd></div>
+          <div><dt className="label">{t('Nights')}</dt><dd>{tripNights(trip)}{trip.nightsMax ? `–${trip.nightsMax}` : ''}</dd></div>
           <div><dt className="label">{t('Travelers')}</dt><dd>{travelerSummary(trip)}</dd></div>
           <div><dt className="label">{t('Stays')}</dt><dd>{trip.stays.length}</dd></div>
           <div><dt className="label">{t('Back from')}</dt><dd>{route.backFrom}</dd></div>

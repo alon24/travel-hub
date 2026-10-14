@@ -26,11 +26,24 @@ describe('NewTrip: describe it and the AI fills in the form', () => {
     expect(trip.travelers).toHaveLength(3)
   })
 
+  it('shows "3 or 4 nights" as a range and keeps it on the trip', async () => {
+    const onCreate = vi.fn()
+    const draft = vi.fn().mockResolvedValue({ home: 'TLV', places: ['LIS', 'OPO'], nights: 3, nightsMax: 4, window: { from: '2026-11-01', to: '2026-11-30' }, start: '2026-11-01', unknown: [] })
+    render(<NewTrip onCreate={onCreate} draft={draft} today="2026-10-11" />)
+    await userEvent.type(screen.getByLabelText(/Describe it/), '3,4 nights in portugal next month{Enter}')
+    expect(await screen.findByRole('status')).toHaveTextContent('Comparing 3 to 4 nights.')
+    expect(screen.getByLabelText('Nights, from')).toHaveValue(3)
+    expect(screen.getByLabelText('Nights, up to')).toHaveValue(4)
+    expect(screen.getByRole('note')).toHaveTextContent('compare 3 to 4 nights')
+    await userEvent.click(screen.getByRole('button', { name: /Create trip/ }))
+    expect(onCreate.mock.calls[0]![0]).toMatchObject({ nightsMax: 4, endDate: '2026-11-04' })
+  })
+
   it('keeps the nights you gave each city ("3 in Lisbon, 4 in Porto"), until you change the nights or cities', async () => {
     const onCreate = vi.fn()
     const draft = vi.fn().mockResolvedValue({ home: 'TLV', places: ['LIS', 'OPO'], start: '2026-11-18', nights: 7, split: [3, 4], unknown: [] })
     render(<NewTrip onCreate={onCreate} draft={draft} today="2026-10-11" />)
-    await userEvent.type(screen.getByLabelText(/Describe it/), 'Portugal 3,4 nights{Enter}')
+    await userEvent.type(screen.getByLabelText(/Describe it/), '3 nights in Lisbon, 4 in Porto{Enter}')
     expect(await screen.findByRole('status')).toHaveTextContent('Lisbon 3 nights, Porto 4 nights.')
     expect(screen.getByLabelText('Nights')).toHaveValue(7)
     await userEvent.click(screen.getByRole('button', { name: /Create trip/ }))

@@ -24,6 +24,8 @@ export function NewTrip({ onCreate, draft, today = new Date().toISOString().slic
   // Any dates in a window ("3 days in December"): Skyhop then looks for the cheapest days in it
   const [flexible, setFlexible] = useState<{ from: string; to: string }>()
   const [nights, setNights] = useState(3)
+  // "3 or 4 nights": compare every length from `nights` up to this; Skyhop searches them all
+  const [nightsMax, setNightsMax] = useState<number>()
   // Nights per city from the AI; dropped as soon as you change the nights or the cities
   const [split, setSplit] = useState<number[]>()
   // Countries picked as a whole: flights search all their airports. Only those you still have a city in count
@@ -52,13 +54,15 @@ export function NewTrip({ onCreate, draft, today = new Date().toISOString().slic
       if (d.start) setStart(d.start)
       setFlexible(d.window)
       if (d.nights) setNights(d.nights)
+      setNightsMax(d.nightsMax)
       setSplit(d.split)
       if (d.adults) setAdults(d.adults)
       if (d.title) setTitle(d.title)
       setError('')
       setNote(
         (d.places.length ? t('Filled in. Check it, then create the trip.') : t("Couldn't tell where you're going. Add a city below.")) +
-          (d.window ? ' ' + t('Any {n} nights between {from} and {to}: Skyhop finds the cheapest days.', { n: d.nights ?? nights, from: d.window.from, to: d.window.to }) : '') +
+          (d.nightsMax ? ' ' + t('Comparing {a} to {b} nights.', { a: d.nights ?? nights, b: d.nightsMax }) : '') +
+          (d.window ? ' ' + t('Any {n} nights between {from} and {to}: Skyhop finds the cheapest days.', { n: d.nightsMax ? `${d.nights ?? nights}-${d.nightsMax}` : d.nights ?? nights, from: d.window.from, to: d.window.to }) : '') +
           (d.split ? ` ${d.places.map((c, i) => `${findAirport(c)?.city ?? c} ${plural(d.split![i]!, 'night')}`).join(', ')}.` : '') +
           (d.unknown.length ? ' ' + t('Not in our city list yet: {list}.', { list: d.unknown.join(', ') }) : ''),
       )
@@ -88,8 +92,8 @@ export function NewTrip({ onCreate, draft, today = new Date().toISOString().slic
     if (place.trim()) return addPlace()
     if (!home) return setError(t('Where do you fly from? Pick a city or airport code.'))
     if (!places.length) return setError(t('Add at least one place to go.'))
-    if (flexible && addDays(flexible.from, nights) > flexible.to) return setError(t("{n} nights don't fit between {from} and {to}. Move \"Back by\" later.", { n: nights, from: flexible.from, to: flexible.to }))
-    onCreate(createTrip({ title, home: home.code, destinations: places.map((code, i) => ({ code, nights: split?.[i] })), startDate: start, nights, adults, countries: wholeCountries, ...(flexible ? { flexible } : {}), ...(request ? { request } : {}) }))
+    if (flexible && addDays(flexible.from, nightsMax ?? nights) > flexible.to) return setError(t("{n} nights don't fit between {from} and {to}. Move \"Back by\" later.", { n: nightsMax ?? nights, from: flexible.from, to: flexible.to }))
+    onCreate(createTrip({ title, home: home.code, destinations: places.map((code, i) => ({ code, nights: split?.[i] })), startDate: start, nights, adults, ...(nightsMax ? { nightsMax } : {}), countries: wholeCountries, ...(flexible ? { flexible } : {}), ...(request ? { request } : {}) }))
   }
 
   return (
@@ -185,12 +189,18 @@ export function NewTrip({ onCreate, draft, today = new Date().toISOString().slic
           checked={Boolean(flexible)}
           onChange={(e) => setFlexible(e.target.checked ? { from: start, to: addDays(start, Math.max(nights, 30)) } : undefined)}
         />{' '}
-        {t('Flexible dates: find the cheapest {n} nights in a window', { n: nights })}
+        {t('Flexible dates: find the cheapest {n} nights in a window', { n: nightsMax ? `${nights}-${nightsMax}` : nights })}
       </label>
       <div className="row">
-        <Stepper id="nt-nights" label={t('Nights')} value={nights} min={1} max={30} onChange={(n) => { setNights(n); setSplit(undefined) }} />
+        <Stepper id="nt-nights" label={nightsMax ? t('Nights, from') : t('Nights')} value={nights} min={1} max={30} onChange={(n) => { setNights(n); setSplit(undefined); if (nightsMax && nightsMax <= n) setNightsMax(Math.min(30, n + 1)) }} />
+        {nightsMax && <Stepper id="nt-nights-max" label={t('Nights, up to')} value={nightsMax} min={Math.min(30, nights + 1)} max={30} onChange={setNightsMax} />}
         <Stepper id="nt-adults" label={t('Travelers')} value={adults} min={1} max={9} onChange={setAdults} />
       </div>
+      <label className="hint flex-toggle">
+        <input type="checkbox" checked={Boolean(nightsMax)} onChange={(e) => setNightsMax(e.target.checked ? Math.min(30, nights + 1) : undefined)} />{' '}
+        {t('Compare a range of nights (for example 3 and 4)')}
+      </label>
+      {nightsMax && <p className="hint" role="note">{t('Skyhop will compare {a} to {b} nights and show the cheapest.', { a: nights, b: nightsMax })}</p>}
       <div className="field">
         <label htmlFor="nt-title">{t('Name')} <span className="hint">{t('· optional')}</span></label>
         <input id="nt-title" value={title} placeholder={t('e.g. Portugal with the guys')} onChange={(e) => setTitle(e.target.value)} />

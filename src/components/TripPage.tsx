@@ -79,8 +79,8 @@ export function TripPage({ trip, onChange, onDelete, navigate = (u) => window.lo
               <div className="empty">
                 <p>
                   {trip.flexible
-                    ? t('Skyhop will check every day from {from} to {to} for the cheapest {nights}, {adults}', { from: fmtDay(trip.flexible.from), to: fmtDay(trip.flexible.to), nights: plural(tripNights(trip), 'night'), adults: plural(adultsOf(trip), 'adult') })
-                    : t('Skyhop will check every day from {from} ± 3 days for {nights}, {adults}', { from: fmtDay(trip.startDate), nights: plural(tripNights(trip), 'night'), adults: plural(adultsOf(trip), 'adult') })}
+                    ? t('Skyhop will check every day from {from} to {to} for the cheapest {nights}, {adults}', { from: fmtDay(trip.flexible.from), to: fmtDay(trip.flexible.to), nights: trip.nightsMax ? t('{a}-{b} nights', { a: tripNights(trip), b: trip.nightsMax }) : plural(tripNights(trip), 'night'), adults: plural(adultsOf(trip), 'adult') })
+                    : t('Skyhop will check every day from {from} ± 3 days for {nights}, {adults}', { from: fmtDay(trip.startDate), nights: trip.nightsMax ? t('{a}-{b} nights', { a: tripNights(trip), b: trip.nightsMax }) : plural(tripNights(trip), 'night'), adults: plural(adultsOf(trip), 'adult') })}
                   {trip.destinations.length > 1 ? t(', flying home from {city}', { city: trip.destinations.at(-1)!.name }) : ''}.
                 </p>
                 <button type="button" className="btn solid" onClick={() => navigate(skyhopSearchUrl(trip, SKYHOP_URL, hubUrl()))}>{t('Find flights in Skyhop →')}</button>
