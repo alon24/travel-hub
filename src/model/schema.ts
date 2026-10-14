@@ -73,6 +73,7 @@ export const tripSchema = z
     home: iata,
     travelers: z.array(traveler),
     destinations: z.array(destination),
+    countries: z.array(z.string().regex(/^[A-Z]{2}$/)).optional(),
     days: z.array(day),
     flights: z.array(flight),
     stays: z.array(stay),

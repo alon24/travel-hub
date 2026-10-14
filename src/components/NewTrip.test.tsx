@@ -59,6 +59,16 @@ describe('NewTrip: describe it and the AI fills in the form', () => {
     expect(screen.getByRole('button', { name: 'Remove LIS' })).toBeInTheDocument()
   })
 
+  it('keeps "Portugal" as the whole country, so flights go to any of its airports', async () => {
+    const onCreate = vi.fn()
+    const draft = vi.fn().mockResolvedValue({ home: 'TLV', places: ['LIS', 'OPO'], nights: 3, countries: ['PT'], unknown: [] })
+    render(<NewTrip onCreate={onCreate} draft={draft} today="2026-10-11" />)
+    await userEvent.type(screen.getByLabelText(/Describe it/), 'flights to Portugal{Enter}')
+    expect(await screen.findByRole('note')).toHaveTextContent('Flights to any airport in Portugal: LIS, OPO, FAO')
+    await userEvent.click(screen.getByRole('button', { name: /Create trip/ }))
+    expect((onCreate.mock.calls[0]![0] as Trip).countries).toEqual(['PT'])
+  })
+
   it('has no AI box when the AI is not set up', () => {
     render(<NewTrip onCreate={vi.fn()} today="2026-10-11" />)
     expect(screen.queryByLabelText(/Describe it/)).not.toBeInTheDocument()
@@ -78,6 +88,7 @@ describe('NewTrip: a country as a destination', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Remove FNC' }))                      // drop the ones you don't want
     await userEvent.click(screen.getByRole('button', { name: /Create trip/ }))
     expect((onCreate.mock.calls[0]![0] as Trip).destinations.map((d) => d.airport)).toEqual(['LIS', 'OPO', 'FAO'])
+    expect((onCreate.mock.calls[0]![0] as Trip).countries).toEqual(['PT'])
   })
 
   it('offers the countries in the list, and picking one adds its airports at once', async () => {

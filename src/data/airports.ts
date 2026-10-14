@@ -4,6 +4,8 @@ export interface Airport {
   city: string
   country: string
   location: [number, number]
+  /** On an island: a whole-country flight search leaves it out unless the trip goes there */
+  island?: boolean
 }
 
 export const AIRPORTS: Airport[] = [
@@ -12,12 +14,12 @@ export const AIRPORTS: Airport[] = [
   { code: 'LIS', city: 'Lisbon', country: 'PT', location: [-9.1354, 38.7742] },
   { code: 'OPO', city: 'Porto', country: 'PT', location: [-8.6814, 41.2481] },
   { code: 'FAO', city: 'Faro', country: 'PT', location: [-7.9659, 37.0144] },
-  { code: 'FNC', city: 'Madeira', country: 'PT', location: [-16.7745, 32.6979] },
+  { code: 'FNC', city: 'Madeira', country: 'PT', location: [-16.7745, 32.6979], island: true },
   { code: 'MAD', city: 'Madrid', country: 'ES', location: [-3.5676, 40.4983] },
   { code: 'BCN', city: 'Barcelona', country: 'ES', location: [2.0785, 41.2974] },
   { code: 'AGP', city: 'Malaga', country: 'ES', location: [-4.4991, 36.6749] },
   { code: 'SVQ', city: 'Seville', country: 'ES', location: [-5.8931, 37.418] },
-  { code: 'PMI', city: 'Palma de Mallorca', country: 'ES', location: [2.7388, 39.5517] },
+  { code: 'PMI', city: 'Palma de Mallorca', country: 'ES', location: [2.7388, 39.5517], island: true },
   { code: 'CDG', city: 'Paris', country: 'FR', location: [2.5479, 49.0097] },
   { code: 'NCE', city: 'Nice', country: 'FR', location: [7.2159, 43.6584] },
   { code: 'LHR', city: 'London', country: 'GB', location: [-0.4543, 51.47] },
@@ -41,8 +43,8 @@ export const AIRPORTS: Airport[] = [
   { code: 'KRK', city: 'Krakow', country: 'PL', location: [19.7848, 50.0777] },
   { code: 'ATH', city: 'Athens', country: 'GR', location: [23.9445, 37.9364] },
   { code: 'SKG', city: 'Thessaloniki', country: 'GR', location: [22.9709, 40.5197] },
-  { code: 'HER', city: 'Heraklion', country: 'GR', location: [25.1803, 35.3397] },
-  { code: 'RHO', city: 'Rhodes', country: 'GR', location: [28.0862, 36.4054] },
+  { code: 'HER', city: 'Heraklion', country: 'GR', location: [25.1803, 35.3397], island: true },
+  { code: 'RHO', city: 'Rhodes', country: 'GR', location: [28.0862, 36.4054], island: true },
   { code: 'LCA', city: 'Larnaca', country: 'CY', location: [33.6249, 34.8751] },
   { code: 'PFO', city: 'Paphos', country: 'CY', location: [32.4857, 34.718] },
   { code: 'IST', city: 'Istanbul', country: 'TR', location: [28.7519, 41.2753] },
@@ -92,4 +94,11 @@ export function findCountry(text: string): Country | undefined {
   if (!q) return undefined
   const alias = COUNTRY_ALIASES[q]
   return COUNTRIES.find((c) => c.code === alias || c.name.toLowerCase() === q)
+}
+
+/** A country's airports for "fly anywhere in it": the mainland ones (islands only when it has nothing else). */
+export function mainlandAirports(country: string): string[] {
+  const all = AIRPORTS.filter((a) => a.country === country)
+  const main = all.filter((a) => !a.island)
+  return (main.length ? main : all).map((a) => a.code)
 }

@@ -33,6 +33,8 @@ export interface Trip {
   travelers: Traveler[]
   /** In travel order */
   destinations: Destination[]
+  /** Countries asked for as a whole ("Portugal"): flights search all their mainland airports, not just the cities' */
+  countries?: string[]
   /** One entry per calendar day from startDate to endDate */
   days: TripDayPlan[]
   flights: FlightLeg[]
