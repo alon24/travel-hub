@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import fixture from '../test/fixtures/skyhop-handoff.json'
 import { flightsHandoff } from './handoff.ts'
-import { addStay, applyFlights, buildDays, createTrip, firstNight, removeStay, skyhopSearchUrl, stayCoverage, staySearchLinks } from './plan.ts'
+import { addStay, applyFlights, buildDays, createTrip, firstNight, removeStay, setStayDates, skyhopSearchUrl, stayCoverage, stayDatesError, staySearchLinks } from './plan.ts'
 import { parseTrip } from './schema.ts'
 
 const handoff = flightsHandoff.parse(fixture)
@@ -92,6 +92,31 @@ describe('stays', () => {
     expect(stayCoverage(t)[0].open).toEqual([])
     expect(t.budget?.planned).toBe(792 + 1200)
     expect(removeStay(t, t.stays[0].id, NOW).budget?.planned).toBe(792)
+  })
+
+  it('checks stay dates: real nights of the stop, not already covered', () => {
+    const at = { destinationId: trip.destinations[0].id }
+    expect(stayDatesError(trip, { ...at, checkIn: '2026-11-16', checkOut: '2026-11-17' })).toBeNull()
+    expect(stayDatesError(trip, { ...at, checkIn: '2026-11-17', checkOut: '2026-11-17' })).toBe('Check-out must be after check-in')
+    expect(stayDatesError(trip, { ...at, checkIn: '2026-11-16', checkOut: '2026-11-19' })).toBe('Those nights are outside Lisbon')
+
+    const t = addStay(trip, { name: 'Alfama flat', destinationId: at.destinationId, checkIn: '2026-11-16', checkOut: '2026-11-18' }, NOW)
+    expect(stayDatesError(t, { ...at, checkIn: '2026-11-17', checkOut: '2026-11-18' })).toBe('Some of those nights already have a stay')
+    expect(stayDatesError(t, { ...at, checkIn: '2026-11-17', checkOut: '2026-11-18' }, t.stays[0].id)).toBeNull()
+  })
+
+  it('gives one night its own hotel by shortening the stay around it', () => {
+    const lisbonId = trip.destinations[0].id
+    const t = addStay(trip, { name: 'Alfama flat', destinationId: lisbonId, checkIn: '2026-11-16', checkOut: '2026-11-18' }, NOW)
+    const [flat] = t.stays
+    const shorter = setStayDates(t, flat.id, '2026-11-16', '2026-11-17', NOW)
+    expect(stayCoverage(shorter)[0].open).toEqual(['2026-11-17'])
+    const withNight = addStay(shorter, { name: 'Night hostel', destinationId: lisbonId, checkIn: '2026-11-17', checkOut: '2026-11-18' }, NOW)
+    expect(withNight.stays.map((s) => [s.name, s.checkIn, s.checkOut])).toEqual([
+      ['Alfama flat', '2026-11-16', '2026-11-17'],
+      ['Night hostel', '2026-11-17', '2026-11-18'],
+    ])
+    expect(stayCoverage(withNight)[0].open).toEqual([])
   })
 
   it('builds hotel searches with the city, dates and group size', () => {

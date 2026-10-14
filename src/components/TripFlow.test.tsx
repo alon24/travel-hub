@@ -1,10 +1,10 @@
-import { act, render, screen, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import App from '../App.tsx'
 import fixture from '../test/fixtures/skyhop-handoff.json'
 import { encodePayload, flightsHandoff } from '../model/handoff.ts'
-import { applyFlights, createTrip } from '../model/plan.ts'
+import { addStay, applyFlights, createTrip } from '../model/plan.ts'
 import type { Trip } from '../model/types.ts'
 import { TripPage } from './TripPage.tsx'
 import { FakeDrive } from '../test/fakeDrive.ts'
@@ -42,6 +42,36 @@ describe('TripPage', () => {
     expect(geocoder).toHaveBeenCalledWith('Alfama flat, Lisbon', [-9.1354, 38.7742])
     const saved: Trip = onChange.mock.calls[0][0]
     expect(saved.stays[0]).toMatchObject({ name: 'Alfama flat', checkIn: '2026-11-16', checkOut: '2026-11-18', price: 1200, location: [-9.13, 38.71] })
+  })
+
+  it('gives one night of a stay its own hotel by changing the stay dates', async () => {
+    const lisbon = withFlights.destinations[0]
+    let current = addStay(withFlights, { name: 'Alfama flat', destinationId: lisbon.id, checkIn: '2026-11-16', checkOut: '2026-11-18' }, NOW)
+    const onChange = vi.fn((t: Trip) => { current = t })
+    const geocoder = vi.fn(async () => [-9.13, 38.71] as [number, number])
+    const { rerender } = render(<TripPage trip={current} onChange={onChange} onDelete={vi.fn()} geocoder={geocoder} />)
+    const rerenderNow = () => rerender(<TripPage trip={current} onChange={onChange} onDelete={vi.fn()} geocoder={geocoder} />)
+
+    await userEvent.click(screen.getByRole('button', { name: 'Change dates of Alfama flat' }))
+    const dates = screen.getByRole('form', { name: 'Dates of Alfama flat' })
+    fireEvent.change(within(dates).getByLabelText('Check-out'), { target: { value: '2026-11-16' } })
+    await userEvent.click(within(dates).getByRole('button', { name: 'Save dates' }))
+    expect(within(dates).getByRole('alert')).toHaveTextContent('Check-out must be after check-in')
+    fireEvent.change(within(dates).getByLabelText('Check-out'), { target: { value: '2026-11-17' } })
+    await userEvent.click(within(dates).getByRole('button', { name: 'Save dates' }))
+    expect(current.stays[0]).toMatchObject({ checkIn: '2026-11-16', checkOut: '2026-11-17' })
+
+    rerenderNow()
+    const stays = screen.getByRole('region', { name: /Where you sleep/ })
+    await userEvent.click(within(stays).getAllByRole('button', { name: /Add the place you booked/ })[0])
+    const form = screen.getByRole('form', { name: 'Stay in Lisbon' })
+    expect(within(form).getByLabelText('Check-in')).toHaveValue('2026-11-17')
+    await userEvent.type(within(form).getByLabelText('Hotel or apartment name'), 'Night hostel')
+    await userEvent.click(within(form).getByRole('button', { name: 'Save stay' }))
+    expect(current.stays.map((s) => [s.name, s.checkIn, s.checkOut])).toEqual([
+      ['Alfama flat', '2026-11-16', '2026-11-17'],
+      ['Night hostel', '2026-11-17', '2026-11-18'],
+    ])
   })
 
   it('shows the itinerary as day tabs with Google Maps links and directions', async () => {
