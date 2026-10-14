@@ -1,3 +1,4 @@
+import { t } from '../i18n.ts'
 import { useEffect, useState, type ReactNode } from 'react'
 import type { Role } from '../lib/account.ts'
 import { loadSession, signIn, signOut, type Session } from './google.ts'
@@ -36,7 +37,7 @@ export function AuthGate({ clientId, check, children }: Props) {
         if (live) setState(role ? { kind: 'signed-in', session: { ...session, role } } : { kind: 'denied', session })
       },
       (e: unknown) => {
-        if (live) setState({ kind: 'signed-out', error: e instanceof Error ? e.message : 'Could not check your account.' })
+        if (live) setState({ kind: 'signed-out', error: e instanceof Error ? e.message : t('Could not check your account.') })
       },
     )
     return () => {
@@ -48,8 +49,8 @@ export function AuthGate({ clientId, check, children }: Props) {
   const expires = state.kind === 'signed-in' ? state.session.expires : 0
   useEffect(() => {
     if (!expires) return
-    const t = setTimeout(() => setState({ kind: 'signed-out', error: 'Your session ended. Sign in again.' }), Math.max(0, expires - Date.now()))
-    return () => clearTimeout(t)
+    const timer = setTimeout(() => setState({ kind: 'signed-out', error: t('Your session ended. Sign in again.') }), Math.max(0, expires - Date.now()))
+    return () => clearTimeout(timer)
   }, [expires])
 
   if (!clientId) return <>{children(null, () => undefined)}</>
@@ -65,7 +66,7 @@ export function AuthGate({ clientId, check, children }: Props) {
     try {
       setState({ kind: 'checking', session: await signIn(clientId) })
     } catch (e) {
-      setState({ kind: 'signed-out', error: e instanceof Error ? e.message : 'Google sign-in failed.' })
+      setState({ kind: 'signed-out', error: e instanceof Error ? e.message : t('Google sign-in failed.') })
     } finally {
       setBusy(false)
     }
@@ -77,23 +78,23 @@ export function AuthGate({ clientId, check, children }: Props) {
     <main className="gate-screen">
       <div className="gate-card">
         <div className="brand"><i />Travel Hub AI</div>
-        {state.kind === 'checking' && <p className="muted" role="status">Checking your account…</p>}
+        {state.kind === 'checking' && <p className="muted" role="status">{t('Checking your account…')}</p>}
         {state.kind === 'signed-out' && (
           <>
-            <h1>Sign in to plan your trips.</h1>
+            <h1>{t('Sign in to plan your trips.')}</h1>
             {state.error && <p className="gate-error" role="alert">{state.error}</p>}
             <button type="button" className="btn solid" onClick={() => void start()} disabled={busy}>
-              {busy ? 'Signing in…' : 'Sign in with Google'}
+              {busy ? t('Signing in…') : t('Sign in with Google')}
             </button>
           </>
         )}
         {state.kind === 'denied' && (
           <>
-            <h1>No access yet.</h1>
+            <h1>{t('No access yet.')}</h1>
             <p className="muted">
-              <b>{state.session.email}</b> isn't on the list for Travel Hub AI. Ask the owner to add it, or use another account.
+              <b>{state.session.email}</b> {t("isn't on the list for Travel Hub AI. Ask the owner to add it, or use another account.")}
             </p>
-            <button type="button" className="btn" onClick={logOut}>Log out</button>
+            <button type="button" className="btn" onClick={logOut}>{t('Log out')}</button>
           </>
         )}
       </div>

@@ -1,3 +1,4 @@
+import { t } from '../i18n.ts'
 import { useEffect, useState } from 'react'
 import { download, DriveError, type DriveCtx } from '../lib/tripDrive.ts'
 import type { Trip } from '../model/types.ts'
@@ -23,13 +24,13 @@ export function SharedTrip({ ctx, fileId, pick, onOpen }: Props) {
       const trip = await download(ctx, fileId)
       if (!trip) {
         setState('error')
-        return setMessage("That file isn't a Travel Hub trip.")
+        return setMessage(t("That file isn't a Travel Hub trip."))
       }
       onOpen(trip)
     } catch (e) {
       if (e instanceof DriveError && (e.status === 404 || e.status === 403)) return setState('pick')
       setState('error')
-      setMessage(e instanceof Error ? e.message : "Couldn't open the trip.")
+      setMessage(e instanceof Error ? e.message : t("Couldn't open the trip."))
     }
   }
   useEffect(() => {
@@ -46,27 +47,27 @@ export function SharedTrip({ ctx, fileId, pick, onOpen }: Props) {
         await open()
       }
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : 'Google Drive is not available right now.')
+      setMessage(e instanceof Error ? e.message : t('Google Drive is not available right now.'))
     }
   }
 
   return (
     <section className="page shared">
       <div className="section-head">
-        <span className="label">Shared trip</span>
-        <h2>{state === 'loading' ? 'Opening the trip…' : state === 'pick' ? 'A friend shared a trip with you' : "Couldn't open the trip"}</h2>
+        <span className="label">{t('Shared trip')}</span>
+        <h2>{state === 'loading' ? t('Opening the trip…') : state === 'pick' ? t('A friend shared a trip with you') : t("Couldn't open the trip")}</h2>
       </div>
       {state === 'pick' &&
         (pick ? (
           <>
-            <p>Google asks you to confirm it once: pick the trip in the window that opens, and it joins your trips.</p>
-            <button type="button" className="btn solid" onClick={() => void choose()}>Open the shared trip</button>
+            <p>{t('Google asks you to confirm it once: pick the trip in the window that opens, and it joins your trips.')}</p>
+            <button type="button" className="btn solid" onClick={() => void choose()}>{t('Open the shared trip')}</button>
           </>
         ) : (
-          <p>This hub can't open shared trips yet (its Google Picker key is not set up).</p>
+          <p>{t("This hub can't open shared trips yet (its Google Picker key is not set up).")}</p>
         ))}
       {message && <p className="hint" role="alert">{message}</p>}
-      <a className="btn" href="#/">See your trips</a>
+      <a className="btn" href="#/">{t('See your trips')}</a>
     </section>
   )
 }

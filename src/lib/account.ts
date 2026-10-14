@@ -1,3 +1,4 @@
+import { t } from '../i18n.ts'
 /**
  * Who may use the hub is decided by the Worker, from the user list shared by all the travel apps
  * (Cloudflare D1, managed on the admin page). This module asks it, and talks to its admin API.
@@ -52,7 +53,7 @@ export class AccountApi {
         headers: { Authorization: `Bearer ${this.token}`, 'X-App': 'hub', ...(init.body ? { 'Content-Type': 'application/json' } : {}) },
       })
     } catch {
-      throw new AccountError('Could not reach the server. Check your connection.', 0)
+      throw new AccountError(t('Could not reach the server. Check your connection.'), 0)
     }
     if (!res.ok) {
       let msg = `Server error ${res.status}`

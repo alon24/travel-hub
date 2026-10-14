@@ -1,7 +1,8 @@
+import { t } from '../i18n.ts'
 export function TripDiagram() {
   return (
     <div className="diagram">
-      <svg viewBox="0 0 420 300" role="img" aria-label="Trip at the center, linked to Skyhop flights, a MyMaps AI map, destinations and stays">
+      <svg viewBox="0 0 420 300" role="img" aria-label={t('Trip at the center, linked to Skyhop flights, a MyMaps AI map, destinations and stays')}>
         <defs>
           <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
             <path d="M0 0 10 5 0 10z" className="arrowhead" />

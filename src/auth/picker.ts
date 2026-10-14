@@ -1,3 +1,4 @@
+import { t } from '../i18n.ts'
 /**
  * Google Picker, pre-selected to one file. With the drive.file scope the hub sees only the files it made,
  * so a trip a friend shared stays hidden until you pick it once here; from then on it syncs like your own.
@@ -35,7 +36,7 @@ function loadScript(src: string): Promise<void> {
     s.src = src
     s.async = true
     s.onload = () => resolve()
-    s.onerror = () => reject(new Error('Could not load Google Drive. Check your connection.'))
+    s.onerror = () => reject(new Error(t('Could not load Google Drive. Check your connection.')))
     document.head.appendChild(s)
   })
 }

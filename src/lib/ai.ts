@@ -1,3 +1,4 @@
+import { t } from '../i18n.ts'
 import { env as defaultEnv, type Env } from '../env.ts'
 
 /**
@@ -34,7 +35,7 @@ export async function askAi(
   auth: AiAuth = {},
   e: Env = defaultEnv,
 ): Promise<string> {
-  if (!aiEnabled(e)) throw new AiError('AI is not set up: VITE_WORKER_URL is empty', 0)
+  if (!aiEnabled(e)) throw new AiError(t('AI is not set up: VITE_WORKER_URL is empty'), 0)
   const headers: Record<string, string> = { 'Content-Type': 'application/json', 'X-App': 'hub' }
   if (auth.appToken) headers['X-App-Token'] = auth.appToken
   else if (auth.googleToken) headers.Authorization = `Bearer ${auth.googleToken}`
@@ -47,11 +48,11 @@ export async function askAi(
       body: JSON.stringify({ system, messages }),
     })
   } catch {
-    throw new AiError('Could not reach the AI Worker', 0)
+    throw new AiError(t('Could not reach the AI Worker'), 0)
   }
-  if (res.status === 401) throw new AiError('Not allowed to use the AI. Sign in again.', 401)
+  if (res.status === 401) throw new AiError(t('Not allowed to use the AI. Sign in again.'), 401)
   if (!res.ok) {
-    let msg = `AI error ${res.status}`
+    let msg = t('AI error {status}', { status: res.status })
     try {
       const body = (await res.json()) as { error?: string }
       if (body.error) msg += `: ${body.error}`
@@ -62,6 +63,6 @@ export async function askAi(
   }
   const data = (await res.json()) as { choices?: { message?: { content?: unknown } }[] }
   const content = data?.choices?.[0]?.message?.content
-  if (typeof content !== 'string') throw new AiError('Unexpected response from the AI', 502)
+  if (typeof content !== 'string') throw new AiError(t('Unexpected response from the AI'), 502)
   return content
 }

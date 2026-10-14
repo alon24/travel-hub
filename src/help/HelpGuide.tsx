@@ -1,3 +1,4 @@
+import { t } from '../i18n.ts'
 import { useEffect, useState } from 'react'
 import { stopFirstRunHelp, type Guide } from './guides.ts'
 
@@ -31,7 +32,7 @@ export function HelpGuide({ guide, onClose }: { guide: Guide; onClose: () => voi
     <div className="help-guide" role="dialog" aria-modal="false" aria-labelledby="help-title" aria-describedby="help-text">
       <div className="help-top">
         <span className="label">{guide.title} · {at + 1}/{steps.length}</span>
-        <button type="button" className="x" aria-label="Close help" onClick={onClose}>×</button>
+        <button type="button" className="x" aria-label={t('Close help')} onClick={onClose}>×</button>
       </div>
       <h3 id="help-title">{step.title}</h3>
       <p id="help-text">{step.text}</p>
@@ -39,11 +40,11 @@ export function HelpGuide({ guide, onClose }: { guide: Guide; onClose: () => voi
         <span className="help-dots" aria-hidden="true">
           {steps.map((s, i) => <i key={s.title} className={i === at ? 'on' : ''} />)}
         </span>
-        {!last && <button type="button" className="link-btn" onClick={onClose}>Skip</button>}
-        {at > 0 && <button type="button" className="btn small" onClick={() => setAt(at - 1)}>Back</button>}
-        <button type="button" className="btn small solid" autoFocus onClick={() => (last ? onClose() : setAt(at + 1))}>{last ? 'Got it' : 'Next'}</button>
+        {!last && <button type="button" className="link-btn" onClick={onClose}>{t('Skip')}</button>}
+        {at > 0 && <button type="button" className="btn small" onClick={() => setAt(at - 1)}>{t('Back')}</button>}
+        <button type="button" className="btn small solid" autoFocus onClick={() => (last ? onClose() : setAt(at + 1))}>{last ? t('Got it') : t('Next')}</button>
       </div>
-      <button type="button" className="link-btn help-off" onClick={() => { stopFirstRunHelp(); onClose() }}>Don't show guides again</button>
+      <button type="button" className="link-btn help-off" onClick={() => { stopFirstRunHelp(); onClose() }}>{t("Don't show guides again")}</button>
     </div>
   )
 }

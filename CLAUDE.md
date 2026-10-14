@@ -15,7 +15,7 @@ Principles:
 
 ## Communication
 - The user writes in **English or Hebrew**. Always reply in **Hebrew**.
-- Code, comments, commit messages, identifiers and UI copy in **English** (unless the user asks for a Hebrew UI).
+- Code, comments, commit messages and identifiers in **English**. UI copy is English with a full Hebrew translation (below).
 - Short messages, lead with the answer. When the user must do something manually (GitHub, Cloudflare, terminal), give numbered steps with exact clicks/commands.
 - Never ask the user to paste secrets or API keys into the chat.
 
@@ -53,6 +53,7 @@ The landing page for the user's travel apps, and the home of the **Trip** object
 - **Planning with friends:** the Trip page's "Plan it together" (`TripShare.tsx`) gives a friend writer access to the trip's Drive file (no Google email: that would hand them a raw file) and shows an invite link `#/shared/<fileId>` to send them (share sheet, WhatsApp, copy). drive.file hides that file from the friend's hub until they pick it once in the Google Picker (`src/auth/picker.ts`, needs `VITE_GOOGLE_API_KEY`, the same browser key as MyMaps AI); then it syncs like their own trips, edits go to the same file (newer wins). Only the owner can trash it: deleting a friend's trip just hides it (its tombstone stays). Admins sharing also add the friend to the user list.
 - **Hotels:** "🔎 Hotels in <city>" on each stay (`src/lib/hotels.ts`) lists places to sleep near the city center from OpenStreetMap (Nominatim for the center, one Overpass query, cached per session; free, no key). OSM has no prices: each result links to a Booking.com search for that hotel and your dates, and "Use" fills the stay with its OSM position (no geocoding). Real prices would need a paid API through a Worker; never put such a key in the browser.
 - **Help:** every screen has a guide in `src/help/guides.ts` (steps point at parts of the screen by CSS selector, usually `data-help="…"`; steps whose target isn't showing are skipped). `HelpGuide.tsx` is a non-modal card that highlights each part; it opens by itself the first time a screen is seen (`travel-hub.help.seen` in localStorage) and from "? Help" in the top bar. Skip closes the tour; "Don't show guides again" marks every screen seen so none opens by itself (? Help still works). New screen or section → add its steps there. E2E `signIn` marks every guide seen unless `{ help: true }`; demo recordings should do the same.
+- **Hebrew UI:** `src/i18n.ts` — `t('English text', {vars})` (the English is the key; `{name}` placeholders) and `plural(n, 'night')`; Hebrew lives in `src/i18n/he.ts`. The language is the browser's (Hebrew → RTL) or the header's EN/עב button (saved in `travel-hub.lang`, reloads the page). Every new user-facing string goes through `t()` and gets a Hebrew entry (a unit test lists the missing ones). Not translated: the Admin page, city names, the Trip-model code samples. Use logical CSS (`margin-inline-start`, …), never left/right.
 - **Config:** `src/env.ts` (zod). Sibling app URLs: `src/links.ts`.
 
 ## Testing

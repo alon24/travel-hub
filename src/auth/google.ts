@@ -1,3 +1,4 @@
+import { t } from '../i18n.ts'
 /**
  * Google sign-in with Google Identity Services (token model), loaded on demand.
  * The session (short-lived access token + who it belongs to) is kept in localStorage
@@ -60,7 +61,7 @@ function loadGis(): Promise<void> {
     s.onload = () => resolve()
     s.onerror = () => {
       gis = null
-      reject(new Error('Could not load Google sign-in. Check your connection.'))
+      reject(new Error(t('Could not load Google sign-in. Check your connection.')))
     }
     document.head.appendChild(s)
   })
@@ -93,10 +94,10 @@ function requestToken(clientId: string): Promise<{ token: string; expires: numbe
       new Promise((resolve, reject) => {
         client ??= window.google!.accounts.oauth2.initTokenClient({ client_id: clientId, scope: SCOPE, callback: () => undefined })
         client.callback = (r) => {
-          if (r.error || !r.access_token) reject(new Error(r.error === 'access_denied' ? 'Google sign-in was declined.' : 'Google sign-in failed.'))
+          if (r.error || !r.access_token) reject(new Error(r.error === 'access_denied' ? t('Google sign-in was declined.') : t('Google sign-in failed.')))
           else resolve({ token: r.access_token, expires: Date.now() + (r.expires_in ?? 3600) * 1000, scopes: (r.scope ?? SCOPE).split(/\s+/) })
         }
-        client.error_callback = (e) => reject(new Error(e.type === 'popup_closed' ? 'The sign-in window was closed.' : 'Google sign-in failed.'))
+        client.error_callback = (e) => reject(new Error(e.type === 'popup_closed' ? t('The sign-in window was closed.') : t('Google sign-in failed.')))
         client.requestAccessToken()
       }),
   )
@@ -106,9 +107,9 @@ function requestToken(clientId: string): Promise<{ token: string; expires: numbe
 export async function signIn(clientId: string): Promise<Session> {
   const { token, expires, scopes } = await requestToken(clientId)
   const res = await fetch(USERINFO, { headers: { Authorization: `Bearer ${token}` } })
-  if (!res.ok) throw new Error('Could not read your Google account.')
+  if (!res.ok) throw new Error(t('Could not read your Google account.'))
   const info = (await res.json()) as { email?: string; name?: string; picture?: string }
-  if (!info.email) throw new Error('Google did not share your email address.')
+  if (!info.email) throw new Error(t('Google did not share your email address.'))
   const session: Session = { token, expires, email: info.email.toLowerCase(), name: info.name, picture: info.picture, scopes }
   saveSession(session)
   return session

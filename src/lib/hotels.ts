@@ -1,3 +1,4 @@
+import { t } from '../i18n.ts'
 import { geocode } from './geocode.ts'
 
 /**
@@ -79,14 +80,14 @@ export function findHotels(city: string, near?: [number, number], fetcher: typeo
   if (hit) return hit
   const run = (async () => {
     const center = (await geocode(city, near, fetcher)) ?? near
-    if (!center) throw new Error(`Couldn't find ${city} on the map.`)
+    if (!center) throw new Error(t("Couldn't find {city} on the map.", { city }))
     let res: Response
     try {
       res = await fetcher(OVERPASS, { method: 'POST', body: new URLSearchParams({ data: hotelQuery(center, radius) }) })
     } catch {
-      throw new Error("Can't reach OpenStreetMap right now.")
+      throw new Error(t("Can't reach OpenStreetMap right now."))
     }
-    if (!res.ok) throw new Error(res.status === 429 ? 'OpenStreetMap is busy. Try again in a minute.' : `OpenStreetMap error ${res.status}.`)
+    if (!res.ok) throw new Error(res.status === 429 ? t('OpenStreetMap is busy. Try again in a minute.') : t('OpenStreetMap error {status}.', { status: res.status }))
     return parseHotels(await res.json(), center)
   })()
   cache.set(key, run)
