@@ -79,6 +79,16 @@ export interface TripDayPlan {
   destinationId?: string
   /** Id of the matching day layer in the MyMaps AI map (Layer.day.date === date) */
   mapLayerId?: string
+  /** Places to visit that day, in order (the itinerary on the Trip page) */
+  places?: DayPlace[]
+}
+
+export interface DayPlace {
+  id: string
+  name: string
+  note?: string
+  /** [lng, lat], when known; otherwise Google Maps searches by name + city */
+  location?: [number, number]
 }
 
 export interface FlightLeg {

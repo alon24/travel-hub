@@ -23,11 +23,19 @@ const destination = z.object({
   depart: isoDate,
 })
 
+const place = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  note: z.string().optional(),
+  location: z.tuple([z.number().min(-180).max(180), z.number().min(-90).max(90)]).optional(),
+})
+
 const day = z.object({
   date: isoDate,
   title: z.string().optional(),
   destinationId: z.string().optional(),
   mapLayerId: z.string().optional(),
+  places: z.array(place).optional(),
 })
 
 const flight = z.object({
