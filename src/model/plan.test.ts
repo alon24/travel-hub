@@ -132,7 +132,7 @@ describe('skyhopSearchUrl', () => {
     const t = createTrip({ home: 'TLV', destinations: [{ code: 'LIS' }, { code: 'OPO' }], startDate: '2026-11-16', nights: 3, adults: 3 }, NOW)
     const url = new URL(skyhopSearchUrl(t, 'https://x.test/sky/', 'https://x.test/hub/'))
     expect(Object.fromEntries(url.searchParams)).toEqual({
-      from: 'TLV', to: 'LIS,OPO', start: '2026-11-13', end: '2026-11-22', nights: '3', adults: '3', trip: t.id, hub: 'https://x.test/hub/',
+      from: 'TLV', to: 'LIS', back: 'OPO', start: '2026-11-13', end: '2026-11-22', nights: '3', adults: '3', trip: t.id, hub: 'https://x.test/hub/',
     })
   })
 })
@@ -159,7 +159,7 @@ describe('skyhopSearchUrl: which airports', () => {
 
   it('flies home from the last country when the trip ends in another one', () => {
     const q = params({ destinations: [{ code: 'LIS' }, { code: 'MAD' }, { code: 'BCN' }], countries: ['PT'] })
-    expect(q).toMatchObject({ to: 'LIS,OPO,FAO', back: 'BCN,MAD' })   // the last city first
+    expect(q).toMatchObject({ to: 'LIS,OPO,FAO', back: 'BCN' })
   })
 
 })
