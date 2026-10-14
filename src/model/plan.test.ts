@@ -152,6 +152,26 @@ describe('skyhopSearchUrl: which airports', () => {
   })
 })
 
+describe('flexible dates ("3 days in December")', () => {
+  const flex = createTrip({ home: 'TLV', destinations: [{ code: 'LIS' }], startDate: '2026-11-16', nights: 2, adults: 2, flexible: { from: '2026-12-01', to: '2026-12-31' } }, NOW)
+
+  it('keeps the window and puts the placeholder dates at its start', () => {
+    expect(flex).toMatchObject({ flexible: { from: '2026-12-01', to: '2026-12-31' }, startDate: '2026-12-01', endDate: '2026-12-03' })
+    expect(parseTrip(JSON.parse(JSON.stringify(flex))).flexible).toEqual({ from: '2026-12-01', to: '2026-12-31' })
+  })
+
+  it('asks Skyhop for the whole window with the trip length, not ± 3 days around a made-up date', () => {
+    const q = new URL(skyhopSearchUrl(flex, 'https://x.test/sky/', 'https://x.test/hub/')).searchParams
+    expect([q.get('start'), q.get('end'), q.get('nights')]).toEqual(['2026-12-01', '2026-12-31', '2'])
+  })
+
+  it('stops being flexible once flights are picked', () => {
+    const t = applyFlights(flex, { ...handoff, tripId: flex.id }, NOW)
+    expect(t.flexible).toBeUndefined()
+    expect(t.startDate).toBe(handoff.legs[0].departs.slice(0, 10))
+  })
+})
+
 describe('buildDays', () => {
   it('keeps a day the user already titled or mapped', () => {
     const t = createTrip({ home: 'TLV', destinations: [{ code: 'LIS' }], startDate: '2026-11-16', nights: 2, adults: 1 }, NOW)

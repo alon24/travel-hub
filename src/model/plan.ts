@@ -62,6 +62,8 @@ export interface NewTripInput {
   childrenAges?: number[]
   /** Countries asked for as a whole, so flights search all their airports */
   countries?: string[]
+  /** Any dates in this window (see Trip.flexible); startDate is ignored then */
+  flexible?: { from: IsoDate; to: IsoDate }
 }
 
 export function makeTravelers(adults: number, childrenAges: number[] = [], keep: Traveler[] = []): Traveler[] {
@@ -74,6 +76,7 @@ export function makeTravelers(adults: number, childrenAges: number[] = [], keep:
 }
 
 export function createTrip(input: NewTripInput, now = new Date()): Trip {
+  if (input.flexible) input = { ...input, startDate: input.flexible.from }
   const endDate = addDays(input.startDate, input.nights)
   const dests = input.destinations.map((d) => ({ id: newId('d'), name: d.name ?? cityName(d.code), airport: d.code, country: airport(d.code)?.country }))
   const own = input.destinations.map((d) => d.nights ?? 0)
@@ -89,6 +92,7 @@ export function createTrip(input: NewTripInput, now = new Date()): Trip {
     status: 'idea',
     startDate: input.startDate,
     endDate,
+    ...(input.flexible ? { flexible: input.flexible } : {}),
     home: input.home,
     travelers: makeTravelers(input.adults, input.childrenAges),
     destinations,
@@ -200,6 +204,8 @@ export function applyFlights(trip: Trip | undefined, h: FlightsHandoff, now = ne
   const searchIds = [...new Set([...(base.apps.skyhop?.searchIds ?? []), ...(h.searchId ? [h.searchId] : [])])]
   const next: Trip = {
     ...base,
+    // Real flights fix the dates, so the trip stops being flexible
+    flexible: undefined,
     status: base.status === 'idea' ? 'planning' : base.status,
     startDate,
     endDate,
@@ -268,8 +274,8 @@ export function staySearchLinks(trip: Pick<Trip, 'travelers'>, d: Pick<Destinati
 }
 
 /**
- * Opens Skyhop with the search filled in from the trip: a window of `flex` days around the dates,
- * the trip's length, and open-jaw when the trip ends somewhere else. `hub` is where Skyhop sends the flights back.
+ * Opens Skyhop with the search filled in from the trip: a window of `flex` days around the dates
+ * (or the trip's whole flexible window, e.g. all of December), the trip's length, and open-jaw when the trip ends somewhere else. `hub` is where Skyhop sends the flights back.
  */
 /**
  * Airports to fly into (or home from) for the stop at one end of the trip: every trip airport in that stop's
@@ -292,8 +298,8 @@ export function skyhopSearchUrl(trip: Trip, skyhopUrl: string, hub: string, flex
     to: to.join(','),
     // Skyhop flies home from any of the "to" airports already; "back" is only needed when the trip ends elsewhere
     ...(back.some((a) => !to.includes(a)) ? { back: back.join(',') } : {}),
-    start: addDays(trip.startDate, -flex),
-    end: addDays(trip.endDate, flex),
+    start: trip.flexible?.from ?? addDays(trip.startDate, -flex),
+    end: trip.flexible?.to ?? addDays(trip.endDate, flex),
     nights: String(nights),
     adults: String(adultsOf(trip)),
     ...(childAges(trip).length ? { children: childAges(trip).join(',') } : {}),

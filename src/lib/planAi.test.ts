@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { draftTrip, planSystem, readPlanReply } from './planAi.ts'
+import { draftTrip, monthWindow, planSystem, readPlanReply } from './planAi.ts'
 
 const today = '2026-10-11'
 afterEach(() => vi.unstubAllGlobals())
@@ -45,6 +45,41 @@ describe('readPlanReply', () => {
     expect(planSystem(today)).toMatch(/"countries"\?:ISO2\[\]/)
   })
 
+  it('"3 days in December" is any 2 nights in the whole of December, not a fixed date', () => {
+    const d = readPlanReply('{"to":["LIS"],"days":3,"month":12}', today)
+    expect(d).toMatchObject({ window: { from: '2026-12-01', to: '2026-12-31' }, nights: 2, start: '2026-12-01' })
+  })
+
+  it('an exact day stays exact; a past one falls back to the month', () => {
+    const exact = readPlanReply('{"to":["LIS"],"nights":3,"month":12,"start":"2026-12-04"}', today)
+    expect([exact.start, exact.window]).toEqual(['2026-12-04', undefined])
+    expect(readPlanReply('{"to":["LIS"],"nights":3,"month":12,"start":"2026-10-01"}', today).window).toEqual({ from: '2026-12-01', to: '2026-12-31' })
+  })
+
+  it('"a week in March" and "late December"', () => {
+    expect(readPlanReply('{"to":["LIS"],"nights":7,"month":3}', today)).toMatchObject({ window: { from: '2027-03-01', to: '2027-03-31' }, nights: 7 })
+    expect(readPlanReply('{"to":["LIS"],"nights":3,"month":12,"part":"late"}', today).window).toEqual({ from: '2026-12-21', to: '2026-12-31' })
+  })
+
+  it('takes a loose window ("next weekend") and stretches it when the trip does not fit', () => {
+    expect(readPlanReply('{"to":["LIS"],"nights":2,"window":{"from":"2026-10-15","to":"2026-10-18"}}', today).window).toEqual({ from: '2026-10-15', to: '2026-10-18' })
+    expect(readPlanReply('{"to":["LIS"],"nights":5,"window":{"from":"2026-10-15","to":"2026-10-18"}}', today).window).toEqual({ from: '2026-10-15', to: '2026-10-20' })
+    // Already over, or back to front: no window at all
+    expect(readPlanReply('{"to":["LIS"],"window":{"from":"2026-09-01","to":"2026-09-05"}}', today).window).toBeUndefined()
+    expect(readPlanReply('{"to":["LIS"],"window":{"from":"2026-12-05","to":"2026-12-01"}}', today).window).toBeUndefined()
+  })
+
+  it('counts days as nights + 1, and nights win when both are given', () => {
+    expect(readPlanReply('{"to":["LIS"],"days":5}', today).nights).toBe(4)
+    expect(readPlanReply('{"to":["LIS"],"days":1}', today).nights).toBe(1)
+    expect(readPlanReply('{"to":["LIS"],"days":5,"nights":3}', today).nights).toBe(3)
+  })
+
+  it('tells the AI a month means any dates in it, never a made-up start', () => {
+    expect(planSystem(today)).toMatch(/"month"\?:1-12/)
+    expect(planSystem(today)).toContain('never "start"')
+  })
+
   it('says so when there is no plan at all', () => {
     expect(() => readPlanReply('I cannot help with that.', today)).toThrow(/didn't return a plan/)
   })
@@ -62,5 +97,24 @@ describe('draftTrip', () => {
     expect(body.system).toContain('LIS Lisbon')
     expect(body.system.length).toBeLessThan(2500)
     expect(body.messages).toEqual([{ role: 'user', content: '3 nights in Lisbon' }])
+  })
+})
+
+describe('monthWindow', () => {
+  it('is the whole month, this year or next', () => {
+    expect(monthWindow(12, undefined, '2026-10-11')).toEqual({ from: '2026-12-01', to: '2026-12-31' })
+    expect(monthWindow(2, undefined, '2026-10-11')).toEqual({ from: '2027-02-01', to: '2027-02-28' })
+    expect(monthWindow(2, undefined, '2027-10-11')).toEqual({ from: '2028-02-01', to: '2028-02-29' })
+  })
+
+  it('splits a month into early, mid and late', () => {
+    expect(monthWindow(11, 'early', '2026-10-11')).toEqual({ from: '2026-11-01', to: '2026-11-10' })
+    expect(monthWindow(11, 'mid', '2026-10-11')).toEqual({ from: '2026-11-11', to: '2026-11-20' })
+    expect(monthWindow(11, 'late', '2026-10-11')).toEqual({ from: '2026-11-21', to: '2026-11-30' })
+  })
+
+  it('starts tomorrow in the current month, and skips to next year once the part is over', () => {
+    expect(monthWindow(12, undefined, '2026-12-10')).toEqual({ from: '2026-12-11', to: '2026-12-31' })
+    expect(monthWindow(12, 'early', '2026-12-10')).toEqual({ from: '2027-12-01', to: '2027-12-10' })
   })
 })

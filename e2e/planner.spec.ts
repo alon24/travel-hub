@@ -52,6 +52,16 @@ test('describe the trip in a sentence: the AI fills in the form, you check it an
   await expect(page.getByRole('article', { name: 'Trip: Portugal with the guys' })).toContainText('LIS')
 })
 
+test('"3 days in December": any dates in December, and Skyhop is asked for the whole month', async ({ page }) => {
+  await page.getByRole('link', { name: 'Plan a trip' }).first().click()
+  await page.getByLabel(/Describe it/).fill('3 days in Lisbon in December')
+  await page.getByRole('button', { name: 'Fill in the form' }).click()
+  await expect(page.getByText(/Any 2 nights between .* Skyhop finds the cheapest days/)).toBeVisible()
+  await expect(page.getByLabel('Back by')).toHaveValue(/-12-31$/)
+  await page.getByRole('button', { name: /Create trip/ }).click()
+  await expect(page.getByText(/Skyhop will check every day from .* to .* for the cheapest 2 nights/)).toBeVisible()
+})
+
 test('a damaged Skyhop link explains itself instead of crashing', async ({ page }) => {
   await page.goto('/#/handoff/not-a-real-payload')
   await expect(page.getByRole('alert')).toContainText(/damaged|understand/)

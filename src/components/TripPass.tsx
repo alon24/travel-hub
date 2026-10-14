@@ -19,8 +19,17 @@ export function TripPass({ trip, label }: { trip: Trip; label?: string }) {
           <span className="code">{route.to}</span>
         </div>
         <dl className="fields">
-          <div><dt className="label">Depart</dt><dd>{passDate(trip.startDate)}</dd></div>
-          <div><dt className="label">Return</dt><dd>{passDate(trip.endDate)}</dd></div>
+          {trip.flexible ? (
+            <>
+              <div><dt className="label">Leave from</dt><dd>{passDate(trip.flexible.from)}</dd></div>
+              <div><dt className="label">Back by</dt><dd>{passDate(trip.flexible.to)}</dd></div>
+            </>
+          ) : (
+            <>
+              <div><dt className="label">Depart</dt><dd>{passDate(trip.startDate)}</dd></div>
+              <div><dt className="label">Return</dt><dd>{passDate(trip.endDate)}</dd></div>
+            </>
+          )}
           <div><dt className="label">Nights</dt><dd>{tripNights(trip)}</dd></div>
           <div><dt className="label">Travelers</dt><dd>{travelerSummary(trip)}</dd></div>
           <div><dt className="label">Stays</dt><dd>{trip.stays.length}</dd></div>

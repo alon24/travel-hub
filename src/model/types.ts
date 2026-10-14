@@ -27,6 +27,12 @@ export interface Trip {
 
   startDate: IsoDate
   endDate: IsoDate
+  /**
+   * Dates not fixed yet: any trip of the same length leaving on or after `from` and back by `to`
+   * (e.g. "3 days in December"). startDate/endDate are then a placeholder at the window's start;
+   * Skyhop searches the whole window, and picking flights fixes the dates and drops this.
+   */
+  flexible?: { from: IsoDate; to: IsoDate }
   /** Home airport, where the trip starts and ends */
   home: Iata
 
