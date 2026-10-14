@@ -316,9 +316,15 @@ function endAirports(trip: Pick<Trip, 'destinations' | 'countries'>, stop: Desti
   return [...new Set([stop.airport, ...inCountry, ...mainlandAirports(country)])]
 }
 
-export function skyhopSearchUrl(trip: Trip, skyhopUrl: string, hub: string, flex = 3): string {
+/** Airports Skyhop flies into (`to`) and, only when the trip ends elsewhere, home from (`back`; else it uses `to`). One source for the link and the Flights card. */
+export function skyhopAirports(trip: Pick<Trip, 'destinations' | 'countries'>): { to: string[]; back: string[] } {
   const to = endAirports(trip, trip.destinations.find((d) => d.airport))
   const back = endAirports(trip, trip.destinations.findLast((d) => d.airport))
+  return { to, back: back.some((a) => !to.includes(a)) ? back : [] }
+}
+
+export function skyhopSearchUrl(trip: Trip, skyhopUrl: string, hub: string, flex = 3): string {
+  const { to, back } = skyhopAirports(trip)
   const nights = Math.round((Date.parse(trip.endDate) - Date.parse(trip.startDate)) / DAY_MS)
   // "3 or 4 nights" goes as a range; Skyhop searches every length in it
   const longest = Math.max(nights, trip.nightsMax ?? 0)
@@ -326,7 +332,7 @@ export function skyhopSearchUrl(trip: Trip, skyhopUrl: string, hub: string, flex
     from: trip.home,
     to: to.join(','),
     // Skyhop flies home from any of the "to" airports already; "back" is only needed when the trip ends elsewhere
-    ...(back.some((a) => !to.includes(a)) ? { back: back.join(',') } : {}),
+    ...(back.length ? { back: back.join(',') } : {}),
     start: trip.flexible?.from ?? addDays(trip.startDate, -flex),
     end: trip.flexible?.to ?? addDays(trip.startDate, longest + flex),
     nights: longest > nights ? `${nights}-${longest}` : String(nights),
