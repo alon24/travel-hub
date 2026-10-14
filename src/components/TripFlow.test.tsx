@@ -22,7 +22,7 @@ describe('TripPage', () => {
     expect(screen.getByRole('listitem', { current: 'step' })).toHaveTextContent('Flights')
     await userEvent.click(screen.getByRole('button', { name: /Find flights in Skyhop/ }))
     const url = new URL(navigate.mock.calls[0][0])
-    expect(url.searchParams.get('to')).toBe('LIS,OPO')
+    expect([url.searchParams.get('to'), url.searchParams.get('back')]).toEqual(['LIS', 'OPO'])
     expect(url.searchParams.get('adults')).toBe('3')
     expect(url.searchParams.get('trip')).toBe(idea.id)
   })
