@@ -70,6 +70,7 @@ export const tripSchema = z
     status: z.enum(['idea', 'planning', 'booked', 'travelling', 'done']),
     startDate: isoDate,
     endDate: isoDate,
+    flexible: z.object({ from: isoDate, to: isoDate }).optional(),
     home: iata,
     travelers: z.array(traveler),
     destinations: z.array(destination),

@@ -75,6 +75,39 @@ describe('NewTrip: describe it and the AI fills in the form', () => {
   })
 })
 
+describe('NewTrip: flexible dates', () => {
+  it('"3 days in December" fills a window, not a fixed date, and the trip keeps it', async () => {
+    const onCreate = vi.fn()
+    const draft = vi.fn().mockResolvedValue({ home: 'TLV', places: ['LIS'], start: '2026-12-01', nights: 2, window: { from: '2026-12-01', to: '2026-12-31' }, unknown: [] })
+    render(<NewTrip onCreate={onCreate} draft={draft} today="2026-10-11" />)
+    await userEvent.type(screen.getByLabelText(/Describe it/), '3 days in Lisbon in December{Enter}')
+    expect(await screen.findByRole('status')).toHaveTextContent('Any 2 nights between 2026-12-01 and 2026-12-31')
+    expect(screen.getByLabelText('Leave from')).toHaveValue('2026-12-01')
+    expect(screen.getByLabelText('Back by')).toHaveValue('2026-12-31')
+    expect(screen.queryByLabelText('Leave around')).toBeNull()
+    await userEvent.click(screen.getByRole('button', { name: /Create trip/ }))
+    expect(onCreate.mock.calls[0]![0]).toMatchObject({ flexible: { from: '2026-12-01', to: '2026-12-31' }, startDate: '2026-12-01', endDate: '2026-12-03' })
+  })
+
+  it('can be switched on and off by hand, and refuses a window too short for the trip', async () => {
+    const onCreate = vi.fn()
+    render(<NewTrip onCreate={onCreate} today="2026-10-11" />)
+    await userEvent.type(screen.getByLabelText('Where to'), 'LIS{Enter}')
+    await userEvent.click(screen.getByLabelText(/Flexible dates/))
+    expect(screen.getByLabelText('Leave from')).toHaveValue('2026-11-10')
+    expect(screen.getByLabelText('Back by')).toHaveValue('2026-12-10')
+    await userEvent.clear(screen.getByLabelText('Back by'))
+    await userEvent.type(screen.getByLabelText('Back by'), '2026-11-11')
+    await userEvent.click(screen.getByRole('button', { name: /Create trip/ }))
+    expect(screen.getByRole('alert')).toHaveTextContent("3 nights don't fit")
+    expect(onCreate).not.toHaveBeenCalled()
+
+    await userEvent.click(screen.getByLabelText(/Flexible dates/))
+    await userEvent.click(screen.getByRole('button', { name: /Create trip/ }))
+    expect((onCreate.mock.calls[0]![0] as Trip).flexible).toBeUndefined()
+  })
+})
+
 describe('NewTrip: a country as a destination', () => {
   it('adds every airport of a typed country, once, and the trip flies to all of them', async () => {
     const onCreate = vi.fn()

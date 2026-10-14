@@ -71,7 +71,7 @@ export function TripPage({ trip, onChange, onDelete, navigate = (u) => window.lo
             ) : (
               <div className="empty">
                 <p>
-                  Skyhop will check every day from {fmtDay(trip.startDate)} ± 3 days for {plural(tripNights(trip), 'night')}, {plural(adultsOf(trip), 'adult')}
+                  Skyhop will check {trip.flexible ? `every day from ${fmtDay(trip.flexible.from)} to ${fmtDay(trip.flexible.to)} for the cheapest` : `every day from ${fmtDay(trip.startDate)} ± 3 days for`} {plural(tripNights(trip), 'night')}, {plural(adultsOf(trip), 'adult')}
                   {trip.destinations.length > 1 ? `, flying home from ${trip.destinations.at(-1)!.name}` : ''}.
                 </p>
                 <button type="button" className="btn solid" onClick={() => navigate(skyhopSearchUrl(trip, SKYHOP_URL, hubUrl()))}>Find flights in Skyhop →</button>

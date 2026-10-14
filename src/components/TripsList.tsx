@@ -17,7 +17,7 @@ export function TripsList({ trips }: { trips: Trip[] }) {
               <span className="label">{t.status}</span>
               <b>{t.title}</b>
               <span className="mono">{r.from} → {r.to}{r.backFrom !== r.to ? ` · home from ${r.backFrom}` : ''}</span>
-              <span className="mono muted">{passDate(t.startDate)} · {tripNights(t)}N · {t.travelers.length} pax</span>
+              <span className="mono muted">{t.flexible ? `${passDate(t.flexible.from)}–${passDate(t.flexible.to)}` : passDate(t.startDate)} · {tripNights(t)}N · {t.travelers.length} pax</span>
             </a>
           )
         })}
