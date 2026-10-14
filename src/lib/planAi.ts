@@ -20,7 +20,9 @@ export interface TripDraft {
   nightsMax?: number
   /** Nights in each of `places`, when the user gave them per city; they add up to `nights` */
   split?: number[]
+  /** Adults only; children are in `childrenAges` */
   adults?: number
+  childrenAges?: number[]
   /** Countries the user asked for as a whole ("Portugal"), so flights search all their airports */
   countries?: string[]
   /**
@@ -73,6 +75,7 @@ const Reply = z.object({
   window: z.object({ from: z.iso.date(), to: z.iso.date() }).optional().catch(undefined),
   split: z.array(z.number().int().min(1).max(30)).max(8).optional().catch(undefined),
   adults: z.number().int().min(1).max(9).optional().catch(undefined),
+  childrenAges: z.array(z.number().int().min(0).max(17)).max(8).optional().catch(undefined),
   countries: z.array(z.string().max(60)).max(8).catch([]),
 })
 
@@ -80,7 +83,7 @@ const Reply = z.object({
 const CITIES = AIRPORTS.map((a) => `${a.code} ${a.city}`).join(', ')
 
 export const planSystem = (today: string) =>
-  `Turn the user's trip wish into JSON only, no prose: {"title"?:string,"from"?:IATA,"to":IATA[],"start"?:"YYYY-MM-DD","nights"?:int,"nightsMax"?:int,"days"?:int,"split"?:int[],"adults"?:int,"countries"?:ISO2[],"month"?:1-12,"part"?:"early"|"mid"|"late","window"?:{"from":"YYYY-MM-DD","to":"YYYY-MM-DD"}}. ` +
+  `Turn the user's trip wish into JSON only, no prose: {"title"?:string,"from"?:IATA,"to":IATA[],"start"?:"YYYY-MM-DD","nights"?:int,"nightsMax"?:int,"days"?:int,"split"?:int[],"adults"?:int,"childrenAges"?:int[],"countries"?:ISO2[],"month"?:1-12,"part"?:"early"|"mid"|"late","window"?:{"from":"YYYY-MM-DD","to":"YYYY-MM-DD"}}. ` +
   `Today is ${today}. "to" is the cities in travel order. A country means its main cities (Portugal → LIS, OPO), and its ISO code goes in "countries" ("PT") so flights search all its airports; ` +
   `not when the user named cities in it ("Lisbon, Portugal" → no "countries"). ` +
   `"start" only for an exact departure day the user named. ` +
@@ -89,6 +92,7 @@ export const planSystem = (today: string) =>
   `"days" when the user counts days ("3 days"), "nights" when they count nights; "a week" is nights 7, "a weekend" is nights 2. Leave out anything the user didn't say. ` +
   `A range or list of lengths for the whole trip ("3-4 nights", "3,4 nights", "3 or 4 nights") means either: "nights" is the smaller, "nightsMax" the larger, no "split". ` +
   `"split" is nights per city in "to" order, only when each city is named with its own number ("3 in Lisbon, 4 in Porto"); a country such as Portugal is one destination, so its numbers are a range. ` +
+  `"adults" counts adults only; each child (under 18) goes in "childrenAges" with their age, so "4 people, 1 is a 16 yo child" is adults 3, childrenAges [16]. ` +
   `Prefer these airports: ${CITIES}.`
 
 /** The model's answer → a draft for the form. Throws only when there's no usable JSON at all. */
@@ -128,7 +132,7 @@ export function readPlanReply(content: string, today: string): TripDraft {
   const longest = nightsMax ?? nights
   if (window && longest && nightsBetween(window.from, window.to) < longest) window = { ...window, to: addDays(window.from, longest) }
   const start = exact ?? window?.from
-  return { title: r.title?.trim() || undefined, home, places, start, nights, adults: r.adults, countries, unknown, split, ...(nightsMax ? { nightsMax } : {}), ...(window ? { window } : {}) }
+  return { title: r.title?.trim() || undefined, home, places, start, nights, adults: r.adults, ...(r.childrenAges?.length ? { childrenAges: r.childrenAges } : {}), countries, unknown, split, ...(nightsMax ? { nightsMax } : {}), ...(window ? { window } : {}) }
 }
 
 /**
@@ -136,7 +140,8 @@ export function readPlanReply(content: string, today: string): TripDraft {
  * because a bare list is a range for the whole trip, never nights per city. Days count one more than nights.
  */
 export function nightsRange(text: string): { min: number; max: number } | undefined {
-  const m = text.match(/(\d{1,2})\s*(?:-|–|—|,|\/|to|or|עד|או)\s*(\d{1,2})\s*(nights?|days?|לילות|לילה|ימים|יום)/i)
+  const unit = '(?:nights?|days?|לילות|לילה|ימים|יום)'
+  const m = text.match(new RegExp(`(\\d{1,2})\\s*(?:${unit}\\s*)?(?:-|–|—|,|/|&|\\bto\\b|\\bor\\b|\\band\\b|עד|או)\\s*(\\d{1,2})\\s*(${unit})`, 'i'))
   if (!m) return undefined
   const off = /day|ימים|יום/i.test(m[3]!) ? 1 : 0
   const [a, b] = [Number(m[1]) - off, Number(m[2]) - off].sort((x, y) => x - y) as [number, number]

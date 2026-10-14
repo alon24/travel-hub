@@ -90,6 +90,7 @@ export const HE: Record<string, string> = {
   Return: 'חזרה',
   Nights: 'לילות',
   Travelers: 'נוסעים',
+  'Travelers include {n} child, age {ages}.': 'בין הנוסעים {n} ילד/ים, גיל {ages}.',
   Stays: 'לינות',
   'Back from': 'חזרה מ-',
   'Trip at the center, linked to Skyhop flights, a MyMaps AI map, destinations and stays': 'טיול במרכז, מקושר לטיסות מ-Skyhop, למפה ב-MyMaps AI, ליעדים ולינות',

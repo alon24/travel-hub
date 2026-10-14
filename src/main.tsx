@@ -5,12 +5,15 @@ import App from './App.tsx'
 import { AuthGate } from './auth/AuthGate.tsx'
 import type { Session } from './auth/google.ts'
 import { env } from './env.ts'
+import { keepFresh } from './lib/sw.ts'
 import { AccountApi, type Role } from './lib/account.ts'
 
 // The Worker decides who comes in, from the user list shared by all the travel apps.
 // Without a Worker (local dev) any Google account gets in as a user.
 const check = (s: Session): Promise<Role | null> =>
   env.VITE_WORKER_URL ? new AccountApi(env.VITE_WORKER_URL, s.token).role(s.email) : Promise.resolve('user')
+
+keepFresh()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

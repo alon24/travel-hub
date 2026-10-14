@@ -26,6 +26,16 @@ describe('NewTrip: describe it and the AI fills in the form', () => {
     expect(trip.travelers).toHaveLength(3)
   })
 
+  it('counts a child in Travelers and creates the trip with them as a child', async () => {
+    const onCreate = vi.fn()
+    const draft = vi.fn().mockResolvedValue({ home: 'TLV', places: ['LIS'], nights: 3, adults: 3, childrenAges: [16], unknown: [] })
+    render(<NewTrip onCreate={onCreate} draft={draft} today="2026-10-11" />)
+    await userEvent.type(screen.getByLabelText(/Describe it/), '4 people, 1 is a 16 yo child{Enter}')
+    expect(screen.getByLabelText('Travelers')).toHaveValue(4)
+    await userEvent.click(screen.getByRole('button', { name: /Create trip/ }))
+    expect((onCreate.mock.calls[0]![0] as Trip).travelers.map((p) => p.kind)).toEqual(['adult', 'adult', 'adult', 'child'])
+  })
+
   it('shows "3 or 4 nights" as a range and keeps it on the trip', async () => {
     const onCreate = vi.fn()
     const draft = vi.fn().mockResolvedValue({ home: 'TLV', places: ['LIS', 'OPO'], nights: 3, nightsMax: 4, window: { from: '2026-11-01', to: '2026-11-30' }, start: '2026-11-01', unknown: [] })
