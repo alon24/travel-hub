@@ -59,7 +59,7 @@ export const GUIDES: Record<HelpScreen, Guide> = {
       },
       {
         title: '3 · Day by day',
-        text: 'Plan the days on a map opens MyMaps AI with a layer for each day and your hotels and airports already on it. Ask its AI to suggest places.',
+        text: 'Tap a day to see its places. Add what you want to see, open each in Google Maps, or get walking directions for the whole day from your hotel. Plan the days on a map opens MyMaps AI with a layer for each day and your hotels and airports already on it. Ask its AI to suggest places.',
         target: '#sec-days',
       },
       { title: 'Budget', text: 'Flights and stays add up here, in total and per person.', target: '.budget' },

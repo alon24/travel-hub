@@ -71,6 +71,21 @@ describe('TripPage', () => {
     expect(saved.stays[0]).toMatchObject({ name: 'Alfama flat', checkIn: '2026-11-16', checkOut: '2026-11-18', price: 1200, location: [-9.13, 38.71] })
   })
 
+  it('shows the itinerary as day tabs with Google Maps links and directions', async () => {
+    let current = withFlights
+    const { rerender } = render(<TripPage trip={current} onChange={(t) => { current = t }} onDelete={vi.fn()} />)
+    const tabs = screen.getByRole('tablist', { name: 'Trip days' })
+    expect(within(tabs).getAllByRole('tab')).toHaveLength(withFlights.days.length)
+    await userEvent.click(within(tabs).getAllByRole('tab')[1])
+    expect(screen.getByRole('tab', { selected: true })).toBe(within(tabs).getAllByRole('tab')[1])
+    expect(screen.queryByRole('link', { name: /Directions/ })).toBeNull()
+    await userEvent.type(screen.getByLabelText('Place name'), 'Belém Tower')
+    await userEvent.click(screen.getByRole('button', { name: /Add$/ }))
+    rerender(<TripPage trip={current} onChange={(t) => { current = t }} onDelete={vi.fn()} />)
+    expect(screen.getByRole('link', { name: 'Open Belém Tower in Google Maps' }).getAttribute('href')).toContain('google.com/maps/search')
+    expect(screen.getByRole('link', { name: /Directions in Google Maps/ }).getAttribute('href')).toContain('google.com/maps/dir')
+  })
+
   it('opens the map in MyMaps AI and remembers it on the trip', async () => {
     const onChange = vi.fn()
     const navigate = vi.fn()

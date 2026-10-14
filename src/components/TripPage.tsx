@@ -7,6 +7,7 @@ import { mapDocFromTrip, mymapsImportUrl } from '../model/mymaps.ts'
 import { addStay, adultsOf, bookingUrl, flightTotal, removeStay, skyhopSearchUrl, stayCoverage, staySearchLinks, stayTotal, type Coverage } from '../model/plan.ts'
 import { dayLabel, tripNights } from '../model/trip.ts'
 import type { FlightLeg, Trip } from '../model/types.ts'
+import { DayTabs } from './DayTabs.tsx'
 import { TripPass } from './TripPass.tsx'
 
 interface Props {
@@ -90,15 +91,7 @@ export function TripPage({ trip, onChange, onDelete, navigate = (u) => window.lo
 
           <section className={`card sec ${step === 'map' ? 'next' : ''}`} aria-labelledby="sec-days">
             <h2 id="sec-days"><span className="num">3</span>Day by day <span className="chip src"><span className="dot dot--map" />MyMaps AI</span></h2>
-            <ol className="days">
-              {trip.days.map((d, i) => (
-                <li key={d.date}>
-                  <span className="mono day-n">D{i + 1}</span>
-                  <span className="mono">{fmtDay(d.date)}</span>
-                  <span>{d.title}</span>
-                </li>
-              ))}
-            </ol>
+            <DayTabs trip={trip} onChange={onChange} />
             <div className="sec-actions">
               <button type="button" className={`btn ${step === 'map' ? 'solid' : ''}`} onClick={openMap}>
                 {trip.apps.mymaps ? 'Open the map in MyMaps AI →' : 'Plan the days on a map →'}

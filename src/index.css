@@ -312,3 +312,15 @@ input:focus-visible,textarea:focus-visible{outline:2px solid var(--sky);outline-
 /* "Flexible dates" switch under the date fields */
 .flex-toggle { display: flex; align-items: center; gap: 8px; cursor: pointer; }
 .flex-toggle input { width: auto; margin: 0; flex: none; accent-color: var(--amber); }
+
+/* Itinerary: day tabs */
+.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:8px;scrollbar-width:thin}
+.tab{flex:0 0 auto;display:grid;gap:0;text-align:center;padding:6px 12px;border:1px solid var(--line);border-radius:10px;background:transparent;color:inherit;font:inherit;cursor:pointer;min-height:44px}
+.tab.on{border-color:var(--amber);background:color-mix(in srgb,var(--amber) 14%,transparent)}
+.day-panel h3{margin:4px 0 8px;font-size:1rem}
+.day-fixed{margin:2px 0;font-size:.93rem}
+.places{list-style:none;margin:8px 0;padding:0;display:grid;gap:4px}
+.places li{display:grid;grid-template-columns:24px 1fr auto;gap:8px;align-items:center;padding:6px 0;border-bottom:1px dashed var(--line)}
+.place-form{display:flex;gap:6px;margin:8px 0}
+.place-form input{flex:1;min-width:0}
+@media (max-width:560px){.places li{grid-template-columns:24px 1fr}.places li .h-actions{grid-column:2}}
