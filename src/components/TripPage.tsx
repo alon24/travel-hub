@@ -196,7 +196,7 @@ function StayRow({ trip, c, onChange, geocoder, hotelFinder }: { trip: Trip; c: 
           {staySearchLinks(trip, c.destination, c.gap.checkIn, c.gap.checkOut).map((l) => (
             <a key={l.name} className="btn small" href={l.url} target="_blank" rel="noopener">{l.name} ↗</a>
           ))}
-          <button type="button" className="btn small" aria-expanded={browsing} onClick={() => setBrowsing(!browsing)}>🔎 Hotels in {c.destination.name}</button>
+          <button type="button" className="btn small" data-help="hotels" aria-expanded={browsing} onClick={() => setBrowsing(!browsing)}>🔎 Hotels in {c.destination.name}</button>
           {!open && <button type="button" className="btn small solid" onClick={() => setOpen(true)}>＋ Add the place you booked</button>}
         </div>
       )}

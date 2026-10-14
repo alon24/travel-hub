@@ -105,7 +105,9 @@ export async function mockPicker(page: Page, drive: FakeDrive) {
   )
 }
 
-export async function signIn(page: Page, email = ALLOWED_EMAIL, drive?: FakeDrive) {
+/** Signs in; the first-run help guides stay closed unless `help` is set (they'd cover the page) */
+export async function signIn(page: Page, email = ALLOWED_EMAIL, drive?: FakeDrive, { help = false } = {}) {
+  if (!help) await page.addInitScript(() => localStorage.setItem('travel-hub.help.seen', JSON.stringify(['home', 'new', 'trip', 'shared', 'admin'])))
   await mockGoogle(page, email)
   await mockWorker(page, email)
   const d = await mockDrive(page, drive)
