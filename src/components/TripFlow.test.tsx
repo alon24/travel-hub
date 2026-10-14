@@ -27,6 +27,13 @@ describe('TripPage', () => {
     expect(url.searchParams.get('trip')).toBe(idea.id)
   })
 
+  it('says what Skyhop really searches for a whole country with a nights range', () => {
+    const t = createTrip({ home: 'TLV', destinations: [{ code: 'LIS' }, { code: 'OPO' }], countries: ['PT'], startDate: '2026-11-16', nights: 3, nightsMax: 4, adults: 3 }, NOW)
+    render(<TripPage trip={t} onChange={vi.fn()} onDelete={vi.fn()} navigate={vi.fn()} />)
+    expect(screen.getByText(/flying into and home from any of LIS, OPO, FAO/)).toBeInTheDocument()
+    expect(screen.getByText(/These beds cover 3; the extra night/)).toBeInTheDocument()
+  })
+
   it('offers to rewrite the request after the trip changed, and saves only what you confirm', async () => {
     const asked = createTrip({ home: 'TLV', destinations: [{ code: 'LIS' }, { code: 'OPO' }], startDate: '2026-11-16', nights: 4, adults: 2, request: '4 nights in Lisbon and Porto' }, NOW)
     const edited = { ...asked, travelers: asked.travelers.slice(0, 1) }

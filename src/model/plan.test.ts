@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import fixture from '../test/fixtures/skyhop-handoff.json'
+import link from '../test/fixtures/skyhop-search-link.json'
 import { flightsHandoff } from './handoff.ts'
 import { addStay, applyFlights, buildDays, createTrip, firstNight, removeStay, setStayDates, skyhopSearchUrl, stayCoverage, stayDatesError, staySearchLinks } from './plan.ts'
 import { parseTrip } from './schema.ts'
@@ -162,6 +163,13 @@ describe('skyhopSearchUrl: which airports', () => {
     expect(q).toMatchObject({ to: 'LIS,OPO,FAO', back: 'BCN' })
   })
 
+})
+
+describe('skyhopSearchUrl: the link Skyhop must read back (shared fixture)', () => {
+  it('sends exactly the fixture query for "3,4 nights in Portugal, 3 adults and a 16-year-old"', () => {
+    const t = { ...createTrip({ home: 'TLV', destinations: [{ code: 'LIS' }, { code: 'OPO' }], countries: ['PT'], startDate: '2026-11-13', nights: 3, nightsMax: 4, adults: 3, childrenAges: [16] }, NOW), id: 'trip_x' }
+    expect(Object.fromEntries(new URL(skyhopSearchUrl(t, 'https://x.test/sky/', 'https://x.test/hub/')).searchParams)).toEqual(link.query)
+  })
 })
 
 describe('flexible dates ("3 days in December")', () => {

@@ -145,6 +145,8 @@ export const HE: Record<string, string> = {
   'Change flights in Skyhop': 'שינוי טיסות ב-Skyhop',
   'Skyhop will check every day from {from} to {to} for the cheapest {nights}, {adults}': 'Skyhop יבדוק כל יום מ-{from} עד {to} כדי למצוא את הזול ביותר ל-{nights}, {adults}',
   'Skyhop will check every day from {from} ± 3 days for {nights}, {adults}': 'Skyhop יבדוק כל יום ב-{from} ± 3 ימים עבור {nights}, {adults}',
+  ', flying into and home from any of {airports}': ', עם טיסה אל וממי מהנמלים {airports}',
+  'You are comparing {a}-{b} nights. These beds cover {a}; the extra night is added when you pick flights.': 'אתם משווים {a}-{b} לילות. הלינות כאן מכסות {a}; הלילה הנוסף יתווסף כשתבחרו טיסות.',
   ', flying home from {city}': ', עם חזרה מ{city}',
   'Find flights in Skyhop →': '← חיפוש טיסות ב-Skyhop',
   'Where you sleep': 'איפה ישנים',

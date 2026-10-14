@@ -5,7 +5,7 @@ import { geocode } from '../lib/geocode.ts'
 import { findHotels, type Hotel, type HotelKind } from '../lib/hotels.ts'
 import { hubUrl, MYMAPS_URL, SKYHOP_URL } from '../links.ts'
 import { mapDocFromTrip, mymapsImportUrl } from '../model/mymaps.ts'
-import { addStay, adultsOf, bookingUrl, flightTotal, removeStay, setStayDates, skyhopSearchUrl, stayCoverage, stayDatesError, staySearchLinks, stayTotal, type Coverage } from '../model/plan.ts'
+import { addStay, adultsOf, bookingUrl, flightTotal, removeStay, setStayDates, skyhopAirports, skyhopSearchUrl, stayCoverage, stayDatesError, staySearchLinks, stayTotal, type Coverage } from '../model/plan.ts'
 import { dayLabel, tripNights } from '../model/trip.ts'
 import type { FlightLeg, Trip } from '../model/types.ts'
 import { requestIsStale, requestSig } from '../model/request.ts'
@@ -36,6 +36,8 @@ const money = (n: number, currency = 'ILS') => new Intl.NumberFormat('en-GB', { 
 /** Everything about one trip, with the next step always one tap away. */
 export function TripPage({ trip, onChange, onDelete, navigate = (u) => window.location.assign(u), geocoder = geocode, hotelFinder = findHotels, share, suggest, rewrite }: Props) {
   const coverage = stayCoverage(trip)
+  const sky = skyhopAirports(trip)
+  const anyAirport = sky.to.length > 1 && !sky.back.length   // a whole country: Skyhop picks the airports by price
   const openNights = coverage.reduce((n, c) => n + c.open.length, 0)
   const currency = trip.budget?.currency ?? 'ILS'
   const people = trip.travelers.length || 1
@@ -81,7 +83,7 @@ export function TripPage({ trip, onChange, onDelete, navigate = (u) => window.lo
                   {trip.flexible
                     ? t('Skyhop will check every day from {from} to {to} for the cheapest {nights}, {adults}', { from: fmtDay(trip.flexible.from), to: fmtDay(trip.flexible.to), nights: trip.nightsMax ? t('{a}-{b} nights', { a: tripNights(trip), b: trip.nightsMax }) : plural(tripNights(trip), 'night'), adults: plural(adultsOf(trip), 'adult') })
                     : t('Skyhop will check every day from {from} ± 3 days for {nights}, {adults}', { from: fmtDay(trip.startDate), nights: trip.nightsMax ? t('{a}-{b} nights', { a: tripNights(trip), b: trip.nightsMax }) : plural(tripNights(trip), 'night'), adults: plural(adultsOf(trip), 'adult') })}
-                  {trip.destinations.length > 1 ? t(', flying home from {city}', { city: trip.destinations.at(-1)!.name }) : ''}.
+                  {anyAirport ? t(', flying into and home from any of {airports}', { airports: sky.to.join(', ') }) : trip.destinations.length > 1 ? t(', flying home from {city}', { city: trip.destinations.at(-1)!.name }) : ''}.
                 </p>
                 <button type="button" className="btn solid" onClick={() => navigate(skyhopSearchUrl(trip, SKYHOP_URL, hubUrl()))}>{t('Find flights in Skyhop →')}</button>
               </div>
@@ -92,6 +94,7 @@ export function TripPage({ trip, onChange, onDelete, navigate = (u) => window.lo
             <h2 id="sec-stays"><span className="num">2</span>{t('Where you sleep')}
               <span className={`chip src ${openNights ? '' : 'ok'}`}>{openNights ? t('{nights} open', { nights: plural(openNights, 'night') }) : t('Every night covered')}</span>
             </h2>
+            {trip.nightsMax ? <p className="hint">{t('You are comparing {a}-{b} nights. These beds cover {a}; the extra night is added when you pick flights.', { a: tripNights(trip), b: trip.nightsMax })}</p> : null}
             {coverage.map((c) => (
               <StayRow key={c.destination.id} trip={trip} c={c} geocoder={geocoder} hotelFinder={hotelFinder} onChange={onChange} />
             ))}
