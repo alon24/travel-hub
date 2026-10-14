@@ -5,7 +5,7 @@ import { CodeTabs } from './components/CodeTabs.tsx'
 import { TripDiagram } from './components/TripDiagram.tsx'
 import { TripPass } from './components/TripPass.tsx'
 import type { Session } from './auth/google.ts'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AdminPage } from './components/AdminPage.tsx'
 import { NewTrip } from './components/NewTrip.tsx'
 import { TripPage } from './components/TripPage.tsx'
@@ -26,6 +26,8 @@ import { applyFlights } from './model/plan.ts'
 import { parseTrip } from './model/schema.ts'
 import type { Trip } from './model/types.ts'
 import { versionLabel } from './version.ts'
+import { GUIDES, markSeen, screenOf, seenScreens } from './help/guides.ts'
+import { HelpGuide } from './help/HelpGuide.tsx'
 
 const example = parseTrip(exampleJson)
 
@@ -84,9 +86,11 @@ interface Props {
   onSignOut?: () => void
   /** Tests only: a stand-in for Google Drive */
   driveFetch?: typeof fetch
+  /** Open each screen's guide by itself the first time it's seen (off in unit tests) */
+  firstRunHelp?: boolean
 }
 
-export default function App({ account, onSignOut, driveFetch }: Props = {}) {
+export default function App({ account, onSignOut, driveFetch, firstRunHelp = import.meta.env.MODE !== 'test' }: Props = {}) {
   const sync = useTripSync(account?.token, driveFetch)
   const route = useRoute()
   const [trips, setTrips] = useState<Trip[]>(listTrips)
@@ -109,6 +113,17 @@ export default function App({ account, onSignOut, driveFetch }: Props = {}) {
   }, [route])
 
   const trip = route.name === 'trip' ? trips.find((t) => t.id === route.id) : undefined
+  // A trip id that isn't loaded yet has nothing to explain
+  const screen = route.name === 'trip' && !trip ? null : screenOf(route)
+  const [help, setHelp] = useState<typeof screen>(null)
+  const closeHelp = useCallback(() => setHelp(null), [])
+  useEffect(() => {
+    setHelp(null)
+    if (!firstRunHelp || !screen || seenScreens().includes(screen)) return
+    markSeen(screen)
+    setHelp(screen)
+  }, [screen, firstRunHelp])
+
   const isAdmin = account?.role === 'admin' && Boolean(account.token) && Boolean(env.VITE_WORKER_URL)
   const token = account?.token
   const adminApi = useMemo(() => (isAdmin && token ? new AccountApi(env.VITE_WORKER_URL, token) : null), [isAdmin, token])
@@ -125,6 +140,11 @@ export default function App({ account, onSignOut, driveFetch }: Props = {}) {
           <a href={GITHUB_URL}>GitHub</a>
           {isAdmin && <a href="#/admin">Admin</a>}
         </nav>
+        {screen && (
+          <button type="button" className="btn small help-btn" data-help="help" aria-label="Help: how this screen works" aria-expanded={help === screen} onClick={() => setHelp(help ? null : screen)}>
+            ? Help
+          </button>
+        )}
         {account && (
           <div className="account">
             {account.picture && <img src={account.picture} alt="" width={28} height={28} referrerPolicy="no-referrer" />}
@@ -175,6 +195,7 @@ export default function App({ account, onSignOut, driveFetch }: Props = {}) {
           <Landing trips={trips} />
         )}
       </main>
+      {help && <HelpGuide key={help} guide={GUIDES[help]} onClose={closeHelp} />}
 
       <footer>
         <span>Travel Hub AI · Skyhop + MyMaps AI + Trip · <a href={`${import.meta.env.BASE_URL}privacy.html`}>Privacy</a> · <a href={`${import.meta.env.BASE_URL}terms.html`}>Terms</a></span>
@@ -196,7 +217,7 @@ function Landing({ trips }: { trips: Trip[] }) {
               and the map.
             </p>
             <div className="ctas">
-              <a className="btn solid" href="#/new">Plan a trip</a>
+              <a className="btn solid" href="#/new" data-help="plan">Plan a trip</a>
               <a className="btn" href={SKYHOP_URL}>Search flights</a>
               <a className="btn" href={MYMAPS_URL}>Open a map</a>
             </div>

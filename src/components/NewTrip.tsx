@@ -108,7 +108,7 @@ export function NewTrip({ onCreate, draft, today = new Date().toISOString().slic
         {COUNTRIES.map((c) => <option key={c.code} value={countryLabel(c)} />)}
         {AIRPORTS.map((a) => <option key={a.code} value={`${a.city} (${a.code})`} />)}
       </datalist>
-      <div className="field">
+      <div className="field" data-help="where">
         <label htmlFor="nt-to">Where to</label>
         <div className="places">
           {places.map((code) => (
@@ -137,7 +137,7 @@ export function NewTrip({ onCreate, draft, today = new Date().toISOString().slic
         </div>
         <span className="hint">In travel order. Flying home from the last one is fine (open-jaw).</span>
       </div>
-      <div className="row">
+      <div className="row" data-help="when">
         <div className="field">
           <label htmlFor="nt-from">From</label>
           <input id="nt-from" list="cities" value={from} onChange={(e) => setFrom(e.target.value)} />
@@ -156,7 +156,7 @@ export function NewTrip({ onCreate, draft, today = new Date().toISOString().slic
         <input id="nt-title" value={title} placeholder="e.g. Portugal with the guys" onChange={(e) => setTitle(e.target.value)} />
       </div>
       {error && <p className="form-error" role="alert">{error}</p>}
-      <button type="submit" className="btn solid">Create trip →</button>
+      <button type="submit" className="btn solid" data-help="create">Create trip →</button>
     </form>
     </>
   )
