@@ -37,7 +37,7 @@ interface TokenResponse {
 interface TokenClient {
   callback: (r: TokenResponse) => void
   error_callback?: (e: { type: string }) => void
-  requestAccessToken: (o?: { prompt?: string }) => void
+  requestAccessToken: (o?: { prompt?: string; hint?: string }) => void
 }
 declare global {
   interface Window {
@@ -88,7 +88,7 @@ function saveSession(s: Session | null) {
 
 let client: TokenClient | null = null
 
-function requestToken(clientId: string): Promise<{ token: string; expires: number; scopes: string[] }> {
+function requestToken(clientId: string, silentFor?: string): Promise<{ token: string; expires: number; scopes: string[] }> {
   return loadGis().then(
     () =>
       new Promise((resolve, reject) => {
@@ -98,9 +98,30 @@ function requestToken(clientId: string): Promise<{ token: string; expires: numbe
           else resolve({ token: r.access_token, expires: Date.now() + (r.expires_in ?? 3600) * 1000, scopes: (r.scope ?? SCOPE).split(/\s+/) })
         }
         client.error_callback = (e) => reject(new Error(e.type === 'popup_closed' ? t('The sign-in window was closed.') : t('Google sign-in failed.')))
-        client.requestAccessToken()
+        client.requestAccessToken(silentFor ? { prompt: '', hint: silentFor } : undefined)
       }),
   )
+}
+
+/** The last signed-in account even if its token has run out: it is who we try to renew silently for. */
+export function lastAccount(): { email: string } | null {
+  try {
+    const s = JSON.parse(localStorage.getItem(SESSION_KEY) ?? 'null') as Session | null
+    return s && typeof s.email === 'string' ? { email: s.email } : null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Renews the access token without asking: Google hands out a new one when the person is still signed in to Google and
+ * already approved the app (no popup shown, or one that closes by itself). Rejects when it needs a real click.
+ */
+export async function refreshSession(clientId: string, prev: { email: string; name?: string; picture?: string }): Promise<Session> {
+  const { token, expires, scopes } = await requestToken(clientId, prev.email)
+  const session: Session = { ...prev, token, expires, scopes }
+  saveSession(session)
+  return session
 }
 
 /** Opens the Google popup. Call it from a click, or the browser blocks the popup. */

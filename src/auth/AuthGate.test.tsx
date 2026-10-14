@@ -6,6 +6,8 @@ import type { Session } from './google.ts'
 
 const google = vi.hoisted(() => ({
   loadSession: vi.fn<() => Session | null>(),
+  lastAccount: vi.fn<() => { email: string } | null>(),
+  refreshSession: vi.fn<(clientId: string, prev: { email: string }) => Promise<Session>>(),
   signIn: vi.fn<(clientId: string) => Promise<Session>>(),
   signOut: vi.fn<(s: Session | null) => Promise<void>>(),
 }))
@@ -33,10 +35,26 @@ beforeEach(() => {
   vi.resetAllMocks()
   check.mockImplementation(async (s: Session) => ROLES[s.email] ?? null)
   google.loadSession.mockReturnValue(null)
+  google.lastAccount.mockReturnValue(null)
   google.signOut.mockResolvedValue()
 })
 
 describe('AuthGate', () => {
+  it('renews an expired token quietly instead of asking to sign in again', async () => {
+    google.lastAccount.mockReturnValue({ email: 'friend@example.com' })
+    google.refreshSession.mockResolvedValue(session('friend@example.com'))
+    renderGate()
+    expect(await screen.findByText('App for friend@example.com as user')).toBeInTheDocument()
+    expect(google.refreshSession).toHaveBeenCalledWith('client-id', { email: 'friend@example.com' })
+  })
+
+  it('falls back to the sign-in button when quiet renewal is not possible', async () => {
+    google.lastAccount.mockReturnValue({ email: 'friend@example.com' })
+    google.refreshSession.mockRejectedValue(new Error('needs click'))
+    renderGate()
+    expect(await screen.findByRole('button', { name: 'Sign in with Google' })).toBeInTheDocument()
+  })
+
   it('shows the app without a gate when no Google client is configured', () => {
     renderGate('')
     expect(screen.getByText('App for nobody')).toBeInTheDocument()

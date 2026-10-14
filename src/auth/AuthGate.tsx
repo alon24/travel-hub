@@ -1,11 +1,12 @@
 import { t } from '../i18n.ts'
 import { useEffect, useState, type ReactNode } from 'react'
 import type { Role } from '../lib/account.ts'
-import { loadSession, signIn, signOut, type Session } from './google.ts'
+import { lastAccount, loadSession, refreshSession, signIn, signOut, type Session } from './google.ts'
 
 export type Account = Session & { role: Role }
 
 type State =
+  | { kind: 'renewing'; email: string }
   | { kind: 'checking'; session: Session }
   | { kind: 'signed-out'; error?: string }
   | { kind: 'denied'; session: Session }
@@ -23,7 +24,10 @@ interface Props {
 export function AuthGate({ clientId, check, children }: Props) {
   const [state, setState] = useState<State>(() => {
     const s = clientId ? loadSession() : null
-    return s ? { kind: 'checking', session: s } : { kind: 'signed-out' }
+    if (s) return { kind: 'checking', session: s }
+    const last = clientId ? lastAccount() : null
+    // A token that ran out while the app was closed: renew it quietly instead of asking again
+    return last ? { kind: 'renewing', email: last.email } : { kind: 'signed-out' }
   })
   const [busy, setBusy] = useState(false)
 
@@ -45,13 +49,41 @@ export function AuthGate({ clientId, check, children }: Props) {
     }
   }, [session, check])
 
-  // The Google token is short-lived: go back to the sign-in screen when it runs out
-  const expires = state.kind === 'signed-in' ? state.session.expires : 0
+  // The Google token lasts about an hour: renew it quietly (a minute or two early, and when the app is reopened)
+  const renewFor = state.kind === 'renewing' ? state.email : null
   useEffect(() => {
-    if (!expires) return
-    const timer = setTimeout(() => setState({ kind: 'signed-out', error: t('Your session ended. Sign in again.') }), Math.max(0, expires - Date.now()))
-    return () => clearTimeout(timer)
-  }, [expires])
+    if (!renewFor || !clientId) return
+    let live = true
+    refreshSession(clientId, { email: renewFor }).then(
+      (s) => live && setState({ kind: 'checking', session: s }),
+      () => live && setState({ kind: 'signed-out' }),
+    )
+    return () => {
+      live = false
+    }
+  }, [renewFor, clientId])
+
+  const current = state.kind === 'signed-in' ? state.session : null
+  useEffect(() => {
+    if (!current || !clientId) return
+    let live = true
+    const renew = () =>
+      refreshSession(clientId, current).then(
+        (s) => live && setState({ kind: 'signed-in', session: { ...s, role: current.role } }),
+        () => live && setState({ kind: 'signed-out', error: t('Your session ended. Sign in again.') }),
+      )
+    const timer = setTimeout(() => void renew(), Math.max(0, current.expires - Date.now() - 120_000))
+    // Phones freeze timers in the background: check again when the app comes back
+    const onVisible = () => {
+      if (document.visibilityState === 'visible' && current.expires - Date.now() < 120_000) void renew()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      live = false
+      clearTimeout(timer)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
+  }, [current, clientId])
 
   if (!clientId) return <>{children(null, () => undefined)}</>
 
@@ -78,7 +110,7 @@ export function AuthGate({ clientId, check, children }: Props) {
     <main className="gate-screen">
       <div className="gate-card">
         <div className="brand"><i />Travel Hub AI</div>
-        {state.kind === 'checking' && <p className="muted" role="status">{t('Checking your account…')}</p>}
+        {(state.kind === 'checking' || state.kind === 'renewing') && <p className="muted" role="status">{t('Checking your account…')}</p>}
         {state.kind === 'signed-out' && (
           <>
             <h1>{t('Sign in to plan your trips.')}</h1>
