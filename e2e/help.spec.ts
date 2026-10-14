@@ -15,7 +15,7 @@ test('a first visit gets a guide that points at each part of the screen, and Hel
   await expect(page.locator('.help-spot')).toHaveText('Plan a trip')
   await page.screenshot({ path: info.outputPath('help-2.png') })
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0)
-  await guide.getByRole('button', { name: 'Close help' }).click()
+  await guide.getByRole('button', { name: 'Skip' }).click()
   await expect(guide).toHaveCount(0)
 
   // The next screen explains itself once too

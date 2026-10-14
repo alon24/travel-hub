@@ -306,3 +306,6 @@ input:focus-visible,textarea:focus-visible{outline:2px solid var(--sky);outline-
 .help-dots i.on{background:var(--amber)}
 .help-spot{outline:3px solid var(--amber);outline-offset:4px;border-radius:12px;scroll-margin:90px}
 @media (max-width:420px){.help-guide{right:16px;left:16px;bottom:16px;width:auto}}
+.link-btn{border:none;background:none;padding:4px 2px;color:var(--muted);font:inherit;font-size:.9rem;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.link-btn:hover{color:var(--ink)}
+.help-off{justify-self:start;font-size:.82rem}

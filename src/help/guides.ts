@@ -106,6 +106,15 @@ export function seenScreens(): HelpScreen[] {
   }
 }
 
+/** "Don't show again": no guide opens by itself any more; ? Help still works. */
+export function stopFirstRunHelp(): void {
+  try {
+    localStorage.setItem(SEEN_KEY, JSON.stringify(Object.keys(GUIDES)))
+  } catch {
+    /* private mode */
+  }
+}
+
 export function markSeen(screen: HelpScreen): void {
   try {
     const seen = seenScreens()

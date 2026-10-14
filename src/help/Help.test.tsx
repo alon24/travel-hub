@@ -89,4 +89,21 @@ describe('Help guide', () => {
     }
     expect(seen).toEqual(GUIDES.trip.steps.filter((s) => s.target !== '.share').map((s) => s.title))
   })
+
+  it('skips the tour, or stops guides from opening by themselves', async () => {
+    const { unmount } = render(<App firstRunHelp />)
+    await userEvent.click(within(guide()).getByRole('button', { name: 'Skip' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    goTo('#/new')
+    await userEvent.click(within(guide()).getByRole('button', { name: "Don't show guides again" }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    unmount()
+    // No other screen opens its guide by itself now, but ? Help still does
+    const trip = saveTrip(createTrip({ title: 'Rome', home: 'TLV', destinations: [{ code: 'FCO' }], startDate: '2027-05-01', nights: 3, adults: 2 }))
+    window.location.hash = `#/trip/${trip.id}`
+    render(<App firstRunHelp />)
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: /Help/ }))
+    expect(guide()).toHaveTextContent('Your trip page')
+  })
 })

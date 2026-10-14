@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import type { Guide } from './guides.ts'
+import { stopFirstRunHelp, type Guide } from './guides.ts'
 
 /**
  * A step-by-step guide that points at the parts of the screen it explains.
@@ -39,9 +39,11 @@ export function HelpGuide({ guide, onClose }: { guide: Guide; onClose: () => voi
         <span className="help-dots" aria-hidden="true">
           {steps.map((s, i) => <i key={s.title} className={i === at ? 'on' : ''} />)}
         </span>
+        {!last && <button type="button" className="link-btn" onClick={onClose}>Skip</button>}
         {at > 0 && <button type="button" className="btn small" onClick={() => setAt(at - 1)}>Back</button>}
         <button type="button" className="btn small solid" autoFocus onClick={() => (last ? onClose() : setAt(at + 1))}>{last ? 'Got it' : 'Next'}</button>
       </div>
+      <button type="button" className="link-btn help-off" onClick={() => { stopFirstRunHelp(); onClose() }}>Don't show guides again</button>
     </div>
   )
 }
