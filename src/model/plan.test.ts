@@ -117,8 +117,38 @@ describe('skyhopSearchUrl', () => {
     const t = createTrip({ home: 'TLV', destinations: [{ code: 'LIS' }, { code: 'OPO' }], startDate: '2026-11-16', nights: 3, adults: 3 }, NOW)
     const url = new URL(skyhopSearchUrl(t, 'https://x.test/sky/', 'https://x.test/hub/'))
     expect(Object.fromEntries(url.searchParams)).toEqual({
-      from: 'TLV', to: 'LIS', back: 'OPO', start: '2026-11-13', end: '2026-11-22', nights: '3', adults: '3', trip: t.id, hub: 'https://x.test/hub/',
+      from: 'TLV', to: 'LIS,OPO', start: '2026-11-13', end: '2026-11-22', nights: '3', adults: '3', trip: t.id, hub: 'https://x.test/hub/',
     })
+  })
+})
+
+describe('skyhopSearchUrl: which airports', () => {
+  const params = (input: Partial<Parameters<typeof createTrip>[0]>) =>
+    Object.fromEntries(new URL(skyhopSearchUrl(createTrip({ home: 'TLV', destinations: [{ code: 'LIS' }], startDate: '2026-11-16', nights: 4, adults: 2, ...input }, NOW), 'https://x.test/sky/', 'https://x.test/hub/')).searchParams)
+
+  it('flies to just the city for a city trip', () => {
+    expect(params({})).toMatchObject({ to: 'LIS' })
+    expect(params({})).not.toHaveProperty('back')
+  })
+
+  it('flies to any mainland airport of a country asked for as a whole, and home from any of them', () => {
+    const q = params({ destinations: [{ code: 'LIS' }, { code: 'OPO' }], countries: ['PT'] })
+    expect(q.to).toBe('LIS,OPO,FAO')
+    expect(q).not.toHaveProperty('back')
+  })
+
+  it('keeps an island the trip goes to', () => {
+    expect(params({ destinations: [{ code: 'FNC' }, { code: 'LIS' }], countries: ['PT'] }).to).toBe('FNC,LIS,OPO,FAO')
+  })
+
+  it('flies home from the last country when the trip ends in another one', () => {
+    const q = params({ destinations: [{ code: 'LIS' }, { code: 'MAD' }, { code: 'BCN' }], countries: ['PT'] })
+    expect(q).toMatchObject({ to: 'LIS,OPO,FAO', back: 'BCN,MAD' })   // the last city first
+  })
+
+  it('keeps the countries through a save and load', () => {
+    const t = createTrip({ home: 'TLV', destinations: [{ code: 'LIS' }], startDate: '2026-11-16', nights: 4, adults: 2, countries: ['PT'] }, NOW)
+    expect(parseTrip(JSON.parse(JSON.stringify(t))).countries).toEqual(['PT'])
   })
 })
 

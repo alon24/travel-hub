@@ -2,7 +2,7 @@
  * Planning a Trip: pure functions the Trip page calls. Each takes a Trip and returns a new one.
  * Dates are YYYY-MM-DD strings compared as text; arithmetic goes through UTC midnight.
  */
-import { airport } from '../data/airports.ts'
+import { airport, mainlandAirports } from '../data/airports.ts'
 import type { FlightsHandoff } from './handoff.ts'
 import { tripDates } from './trip.ts'
 import { TRIP_SCHEMA_VERSION, type Destination, type FlightLeg, type IsoDate, type Stay, type Traveler, type Trip, type TripDayPlan } from './types.ts'
@@ -60,6 +60,8 @@ export interface NewTripInput {
   nights: number
   adults: number
   childrenAges?: number[]
+  /** Countries asked for as a whole, so flights search all their airports */
+  countries?: string[]
 }
 
 export function makeTravelers(adults: number, childrenAges: number[] = [], keep: Traveler[] = []): Traveler[] {
@@ -90,6 +92,7 @@ export function createTrip(input: NewTripInput, now = new Date()): Trip {
     home: input.home,
     travelers: makeTravelers(input.adults, input.childrenAges),
     destinations,
+    ...(input.countries?.length ? { countries: input.countries } : {}),
     days: [],
     flights: [],
     stays: [],
@@ -268,13 +271,27 @@ export function staySearchLinks(trip: Pick<Trip, 'travelers'>, d: Pick<Destinati
  * Opens Skyhop with the search filled in from the trip: a window of `flex` days around the dates,
  * the trip's length, and open-jaw when the trip ends somewhere else. `hub` is where Skyhop sends the flights back.
  */
+/**
+ * Airports to fly into (or home from) for the stop at one end of the trip: every trip airport in that stop's
+ * country, plus all the mainland airports when the person asked for the whole country ("Portugal" → LIS, OPO, FAO).
+ */
+function endAirports(trip: Pick<Trip, 'destinations' | 'countries'>, stop: Destination | undefined): string[] {
+  if (!stop?.airport) return []
+  const country = stop.country ?? airport(stop.airport)?.country
+  const inCountry = trip.destinations.filter((d) => d.airport && (d.country ?? airport(d.airport)?.country) === country).map((d) => d.airport!)
+  const whole = country && trip.countries?.includes(country) ? mainlandAirports(country) : []
+  return [...new Set([stop.airport, ...inCountry, ...whole])]
+}
+
 export function skyhopSearchUrl(trip: Trip, skyhopUrl: string, hub: string, flex = 3): string {
-  const airports = trip.destinations.map((d) => d.airport).filter((a): a is string => Boolean(a))
+  const to = endAirports(trip, trip.destinations.find((d) => d.airport))
+  const back = endAirports(trip, trip.destinations.findLast((d) => d.airport))
   const nights = Math.round((Date.parse(trip.endDate) - Date.parse(trip.startDate)) / DAY_MS)
   const q = new URLSearchParams({
     from: trip.home,
-    to: airports[0] ?? '',
-    ...(airports.length > 1 && airports.at(-1) !== airports[0] ? { back: airports.at(-1)! } : {}),
+    to: to.join(','),
+    // Skyhop flies home from any of the "to" airports already; "back" is only needed when the trip ends elsewhere
+    ...(back.some((a) => !to.includes(a)) ? { back: back.join(',') } : {}),
     start: addDays(trip.startDate, -flex),
     end: addDays(trip.endDate, flex),
     nights: String(nights),

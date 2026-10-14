@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { AIRPORTS, COUNTRIES, countryLabel, findAirport, findCountry } from '../data/airports.ts'
+import { AIRPORTS, COUNTRIES, countryLabel, findAirport, findCountry, mainlandAirports } from '../data/airports.ts'
 import { createTrip, addDays } from '../model/plan.ts'
 import type { Trip } from '../model/types.ts'
 import type { TripDraft } from '../lib/planAi.ts'
@@ -23,6 +23,9 @@ export function NewTrip({ onCreate, draft, today = new Date().toISOString().slic
   const [nights, setNights] = useState(3)
   // Nights per city from the AI; dropped as soon as you change the nights or the cities
   const [split, setSplit] = useState<number[]>()
+  // Countries picked as a whole: flights search all their airports. Only those you still have a city in count
+  const [countries, setCountries] = useState<string[]>([])
+  const wholeCountries = countries.filter((c) => places.some((p) => findAirport(p)?.country === c))
   const [adults, setAdults] = useState(2)
   const [title, setTitle] = useState('')
   const [error, setError] = useState('')
@@ -38,6 +41,7 @@ export function NewTrip({ onCreate, draft, today = new Date().toISOString().slic
     try {
       const d = await draft(wish)
       if (d.places.length) setPlaces(d.places)
+      setCountries(d.countries ?? [])
       if (d.home) setFrom(`${findAirport(d.home)?.city} (${d.home})`)
       if (d.start) setStart(d.start)
       if (d.nights) setNights(d.nights)
@@ -64,6 +68,7 @@ export function NewTrip({ onCreate, draft, today = new Date().toISOString().slic
     // A country adds all its airports, so every one of them is searched; remove the ones you don't want
     const codes = a ? [a.code] : country!.airports.map((x) => x.code)
     setPlaces([...places, ...codes.filter((c) => !places.includes(c))])
+    if (country && !countries.includes(country.code)) setCountries([...countries, country.code])
     setSplit(undefined)
     setPlace('')
     setError('')
@@ -75,7 +80,7 @@ export function NewTrip({ onCreate, draft, today = new Date().toISOString().slic
     if (place.trim()) return addPlace()
     if (!home) return setError('Where do you fly from? Pick a city or airport code.')
     if (!places.length) return setError('Add at least one place to go.')
-    onCreate(createTrip({ title, home: home.code, destinations: places.map((code, i) => ({ code, nights: split?.[i] })), startDate: start, nights, adults }))
+    onCreate(createTrip({ title, home: home.code, destinations: places.map((code, i) => ({ code, nights: split?.[i] })), startDate: start, nights, adults, countries: wholeCountries }))
   }
 
   return (
@@ -136,6 +141,11 @@ export function NewTrip({ onCreate, draft, today = new Date().toISOString().slic
           />
         </div>
         <span className="hint">In travel order. Flying home from the last one is fine (open-jaw).</span>
+        {wholeCountries.map((c) => (
+          <span key={c} className="hint" role="note">
+            ✈ Flights to any airport in {COUNTRIES.find((x) => x.code === c)?.name ?? c}: {[...new Set([...mainlandAirports(c), ...places.filter((p) => findAirport(p)?.country === c)])].join(', ')}
+          </span>
+        ))}
       </div>
       <div className="row">
         <div className="field">

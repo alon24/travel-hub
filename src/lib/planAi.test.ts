@@ -7,7 +7,7 @@ afterEach(() => vi.unstubAllGlobals())
 describe('readPlanReply', () => {
   it('turns the JSON into a draft with our airport codes, in travel order', () => {
     const d = readPlanReply('{"title":"Portugal with the guys","from":"TLV","to":["Lisbon","OPO","lis"],"start":"2026-11-18","nights":3,"adults":3}', today)
-    expect(d).toEqual({ title: 'Portugal with the guys', home: 'TLV', places: ['LIS', 'OPO'], start: '2026-11-18', nights: 3, adults: 3, unknown: [], split: undefined })
+    expect(d).toEqual({ title: 'Portugal with the guys', home: 'TLV', places: ['LIS', 'OPO'], start: '2026-11-18', nights: 3, adults: 3, countries: [], unknown: [], split: undefined })
   })
 
   it('reads JSON wrapped in a code fence or a sentence', () => {
@@ -20,7 +20,7 @@ describe('readPlanReply', () => {
 
   it('ignores bad values but keeps the good ones', () => {
     const d = readPlanReply('{"to":["LIS"],"start":"2026-10-01","nights":99,"adults":"three","from":"Nowhere"}', today)
-    expect(d).toEqual({ title: undefined, home: undefined, places: ['LIS'], start: undefined, nights: undefined, adults: undefined, unknown: [], split: undefined })
+    expect(d).toEqual({ title: undefined, home: undefined, places: ['LIS'], start: undefined, nights: undefined, adults: undefined, countries: [], unknown: [], split: undefined })
   })
 
   it('takes nights per city ("3 in Lisbon, 4 in Porto") and adds them up', () => {
@@ -35,6 +35,14 @@ describe('readPlanReply', () => {
   it('tells the AI how to read nights per city and a range of nights', () => {
     expect(planSystem(today)).toMatch(/"split"\?:int\[\]/)
     expect(planSystem(today)).toContain('3-4 nights')
+  })
+
+  it('keeps a country asked for as a whole ("Portugal"), by code or name, only when the trip goes there', () => {
+    expect(readPlanReply('{"to":["LIS","OPO"],"countries":["pt"]}', today).countries).toEqual(['PT'])
+    expect(readPlanReply('{"to":["LIS","OPO"],"countries":["Portugal","PT"]}', today).countries).toEqual(['PT'])
+    expect(readPlanReply('{"to":["LIS"],"countries":["ES","Narnia"]}', today).countries).toEqual([])
+    expect(readPlanReply('{"to":["LIS"],"countries":"PT"}', today).countries).toEqual([])
+    expect(planSystem(today)).toMatch(/"countries"\?:ISO2\[\]/)
   })
 
   it('says so when there is no plan at all', () => {
