@@ -8,6 +8,8 @@
  * Like Skyhop, a Trip never stores payment or passport details.
  */
 
+import type { TripRequest } from './request.ts'
+
 export const TRIP_SCHEMA_VERSION = 1
 
 /** YYYY-MM-DD */
@@ -50,6 +52,8 @@ export interface Trip {
   apps: TripApps
 
   budget?: Budget
+  /** The text the trip was created from ("Describe it"), plus its rewritten version after edits; see request.ts */
+  request?: TripRequest
   notes: string
   createdAt: IsoDateTime
   updatedAt: IsoDateTime

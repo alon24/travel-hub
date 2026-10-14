@@ -335,3 +335,4 @@ input:focus-visible,textarea:focus-visible{outline:2px solid var(--sky);outline-
 :root[dir=rtl] .back{display:inline-block}
 .lang-btn{margin-inline-start:8px}
 :root[dir=rtl] .label,:root[dir=rtl] .tag{letter-spacing:0;text-transform:none;font-family:var(--body)}
+.request .request-text{margin:6px 0;white-space:pre-wrap}.request textarea{width:100%}.request details{margin-top:8px}

@@ -219,6 +219,14 @@ export const HE: Record<string, string> = {
   'No new ideas this time. Try again.': 'אין רעיונות חדשים הפעם. נסו שוב.',
 
   // Sharing
+  'Your request': 'הבקשה שלך',
+  'New request text': 'נוסח חדש לבקשה',
+  'Save': 'שמירה',
+  'You changed the trip since this was written.': 'שינית את הטיול מאז שזה נכתב.',
+  'Rewriting…': 'מנסח מחדש…',
+  'Update the request': 'עדכון הבקשה',
+  'Keep as is': 'להשאיר כמו שזה',
+  'What you first wrote': 'מה שכתבת בהתחלה',
   'Plan it together': 'מתכננים ביחד',
   'People on this trip': 'האנשים בטיול הזה',
   owner: 'בעלים',
