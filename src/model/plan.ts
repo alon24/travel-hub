@@ -252,6 +252,22 @@ export function removeStay(trip: Trip, id: string, now = new Date()): Trip {
   return withBudget({ ...trip, stays: trip.stays.filter((s) => s.id !== id), updatedAt: now.toISOString() })
 }
 
+/** Why these dates can't be a stay in that destination, or null when they can: real nights of the stop, not already sleeping elsewhere. */
+export function stayDatesError(trip: Pick<Trip, 'destinations' | 'stays'>, d: { destinationId: string; checkIn: IsoDate; checkOut: IsoDate }, exceptId?: string): string | null {
+  const dest = trip.destinations.find((x) => x.id === d.destinationId)
+  if (!dest) return 'Unknown destination'
+  if (d.checkIn >= d.checkOut) return 'Check-out must be after check-in'
+  if (d.checkIn < dest.arrive || d.checkOut > dest.depart) return `Those nights are outside ${dest.name}`
+  if (trip.stays.some((s) => s.id !== exceptId && s.checkIn < d.checkOut && d.checkIn < s.checkOut)) return 'Some of those nights already have a stay'
+  return null
+}
+
+/** Moves a stay to other nights (for example, to give one night its own hotel). Checked by stayDatesError first. */
+export function setStayDates(trip: Trip, id: string, checkIn: IsoDate, checkOut: IsoDate, now = new Date()): Trip {
+  const stays = trip.stays.map((s) => (s.id === id ? { ...s, checkIn, checkOut } : s)).sort((a, b) => a.checkIn.localeCompare(b.checkIn))
+  return { ...trip, stays, updatedAt: now.toISOString() }
+}
+
 export const adultsOf = (t: Pick<Trip, 'travelers'>): number => t.travelers.filter((p) => p.kind === 'adult').length
 export const childAges = (t: Pick<Trip, 'travelers'>): number[] => t.travelers.filter((p) => p.kind === 'child').map((p) => p.age ?? 8)
 

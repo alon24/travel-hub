@@ -4,7 +4,7 @@ import { geocode } from '../lib/geocode.ts'
 import { findHotels, type Hotel, type HotelKind } from '../lib/hotels.ts'
 import { hubUrl, MYMAPS_URL, SKYHOP_URL } from '../links.ts'
 import { mapDocFromTrip, mymapsImportUrl } from '../model/mymaps.ts'
-import { addStay, adultsOf, bookingUrl, flightTotal, removeStay, skyhopSearchUrl, stayCoverage, staySearchLinks, stayTotal, type Coverage } from '../model/plan.ts'
+import { addStay, adultsOf, bookingUrl, flightTotal, removeStay, setStayDates, skyhopSearchUrl, stayCoverage, stayDatesError, staySearchLinks, stayTotal, type Coverage } from '../model/plan.ts'
 import { dayLabel, tripNights } from '../model/trip.ts'
 import type { FlightLeg, Trip } from '../model/types.ts'
 import { DayTabs } from './DayTabs.tsx'
@@ -140,13 +140,30 @@ function StayRow({ trip, c, onChange, geocoder, hotelFinder }: { trip: Trip; c: 
   const [name, setName] = useState('')
   const [price, setPrice] = useState('')
   const [url, setUrl] = useState('')
+  /** Check-in and check-out of the stay being added, starting from the open gap */
+  const [from, setFrom] = useState('')
+  const [to, setTo] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  /** The stay whose dates are being changed, and its dates while editing */
+  const [editing, setEditing] = useState<{ id: string; from: string; to: string; error: string | null } | null>(null)
   const [busy, setBusy] = useState(false)
   const stays = trip.stays.filter((s) => s.destinationId === c.destination.id)
   const span = c.nights.length ? `${fmtDay(c.nights[0])} → ${fmtDay(c.destination.depart)}` : ''
+  const dates = { min: c.destination.arrive, max: c.destination.depart }
+
+  const openForm = () => {
+    if (!c.gap) return
+    setFrom(c.gap.checkIn)
+    setTo(c.gap.checkOut)
+    setError(null)
+    setOpen(true)
+  }
 
   const save = async (e: FormEvent) => {
     e.preventDefault()
-    if (!c.gap || !name.trim()) return
+    if (!name.trim()) return
+    const problem = stayDatesError(trip, { destinationId: c.destination.id, checkIn: from, checkOut: to })
+    if (problem) return setError(problem)
     setBusy(true)
     const near = c.destination.airport ? airport(c.destination.airport)?.location : undefined
     const location = picked && picked.name === name.trim() ? picked.location : await geocoder(`${name.trim()}, ${c.destination.name}`, near)
@@ -155,8 +172,8 @@ function StayRow({ trip, c, onChange, geocoder, hotelFinder }: { trip: Trip; c: 
       addStay(trip, {
         name: name.trim(),
         destinationId: c.destination.id,
-        checkIn: c.gap.checkIn,
-        checkOut: c.gap.checkOut,
+        checkIn: from,
+        checkOut: to,
         ...(Number(price) > 0 ? { price: Number(price), currency: trip.budget?.currency ?? 'ILS' } : {}),
         ...(link ? { url: link } : {}),
         ...(location ? { location } : {}),
@@ -168,6 +185,16 @@ function StayRow({ trip, c, onChange, geocoder, hotelFinder }: { trip: Trip; c: 
     setName('')
     setPrice('')
     setUrl('')
+    setError(null)
+  }
+
+  const saveDates = (e: FormEvent) => {
+    e.preventDefault()
+    if (!editing) return
+    const problem = stayDatesError(trip, { destinationId: c.destination.id, checkIn: editing.from, checkOut: editing.to }, editing.id)
+    if (problem) return setEditing({ ...editing, error: problem })
+    onChange(setStayDates(trip, editing.id, editing.from, editing.to))
+    setEditing(null)
   }
 
   return (
@@ -180,7 +207,17 @@ function StayRow({ trip, c, onChange, geocoder, hotelFinder }: { trip: Trip; c: 
         <div key={s.id} className="stay">
           <span>🏨 <b>{s.name}</b> <span className="hint">{fmtDay(s.checkIn)} → {fmtDay(s.checkOut)}{s.location ? ' · on the map' : ''}</span></span>
           <span className="mono">{s.price != null ? money(s.price, s.currency) : ''}</span>
+          <button type="button" className="btn small" aria-label={`Change dates of ${s.name}`} onClick={() => setEditing({ id: s.id, from: s.checkIn, to: s.checkOut, error: null })}>Dates</button>
           <button type="button" className="x" aria-label={`Remove ${s.name}`} onClick={() => onChange(removeStay(trip, s.id))}>×</button>
+          {editing?.id === s.id && (
+            <form className="stay-form stay-dates" onSubmit={saveDates} aria-label={`Dates of ${s.name}`}>
+              <input type="date" aria-label="Check-in" min={dates.min} max={dates.max} value={editing.from} onChange={(e) => setEditing({ ...editing, from: e.target.value, error: null })} required />
+              <input type="date" aria-label="Check-out" min={dates.min} max={dates.max} value={editing.to} onChange={(e) => setEditing({ ...editing, to: e.target.value, error: null })} required />
+              <button type="submit" className="btn small solid">Save dates</button>
+              <button type="button" className="btn small" onClick={() => setEditing(null)}>Cancel</button>
+              {editing.error && <p className="hint error" role="alert">{editing.error}</p>}
+            </form>
+          )}
         </div>
       ))}
       {c.gap && (
@@ -190,7 +227,7 @@ function StayRow({ trip, c, onChange, geocoder, hotelFinder }: { trip: Trip; c: 
             <a key={l.name} className="btn small" href={l.url} target="_blank" rel="noopener">{l.name} ↗</a>
           ))}
           <button type="button" className="btn small" data-help="hotels" aria-expanded={browsing} onClick={() => setBrowsing(!browsing)}>🔎 Hotels in {c.destination.name}</button>
-          {!open && <button type="button" className="btn small solid" onClick={() => setOpen(true)}>＋ Add the place you booked</button>}
+          {!open && <button type="button" className="btn small solid" onClick={openForm}>＋ Add the place you booked</button>}
         </div>
       )}
       {browsing && c.gap && (
@@ -204,7 +241,7 @@ function StayRow({ trip, c, onChange, geocoder, hotelFinder }: { trip: Trip; c: 
             setName(h.name)
             setUrl(h.website ?? bookingUrl(trip, `${h.name}, ${c.destination.name}`, c.gap!.checkIn, c.gap!.checkOut))
             setBrowsing(false)
-            setOpen(true)
+            openForm()
           }}
         />
       )}
@@ -213,8 +250,11 @@ function StayRow({ trip, c, onChange, geocoder, hotelFinder }: { trip: Trip; c: 
           <input aria-label="Hotel or apartment name" placeholder="Hotel or apartment name" value={name} onChange={(e) => setName(e.target.value)} required autoFocus />
           <input aria-label="Total price" placeholder="Total price" inputMode="numeric" value={price} onChange={(e) => setPrice(e.target.value.replace(/[^\d.]/g, ''))} />
           <input aria-label="Link (optional)" placeholder="Link (optional)" value={url} onChange={(e) => setUrl(e.target.value)} />
+          <input type="date" aria-label="Check-in" min={dates.min} max={dates.max} value={from} onChange={(e) => { setFrom(e.target.value); setError(null) }} required />
+          <input type="date" aria-label="Check-out" min={dates.min} max={dates.max} value={to} onChange={(e) => { setTo(e.target.value); setError(null) }} required />
           <button type="submit" className="btn small solid" disabled={busy}>{busy ? 'Saving…' : 'Save stay'}</button>
           <button type="button" className="btn small" onClick={() => setOpen(false)}>Cancel</button>
+          {error && <p className="hint error" role="alert">{error}</p>}
         </form>
       )}
     </div>

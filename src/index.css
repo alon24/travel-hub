@@ -218,8 +218,10 @@ input:focus-visible,textarea:focus-visible{outline:2px solid var(--sky);outline-
 .stay{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;background:var(--code-bg);border-radius:10px;padding:8px 12px}
 .stay .x{border:none;background:none;color:var(--muted);font-size:1.1rem;cursor:pointer}
 .stay-gap{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.stay-form{display:grid;grid-template-columns:2fr 1fr 1.4fr auto auto;gap:8px;align-items:center}
+.stay-form{display:grid;grid-template-columns:2fr 1fr 1.4fr 1.2fr 1.2fr auto auto;gap:8px;align-items:center}
 .stay-form input{padding:8px 10px}
+.stay-form .error,.stay-form.stay-dates .error{grid-column:1/-1;color:var(--danger,#c0392b);margin:0}
+.stay-form.stay-dates{grid-template-columns:1fr 1fr auto auto}
 .days{list-style:none;margin:0;padding:0;display:grid;gap:4px}
 .days li{display:grid;grid-template-columns:40px 110px 1fr;gap:8px;padding:6px 0;border-bottom:1px dashed var(--line);font-size:.93rem}
 .day-n{color:var(--amber);font-weight:600}
