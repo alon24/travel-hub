@@ -13,6 +13,10 @@ test('shows both apps and the example trip', async ({ page }) => {
   await expect(page.getByRole('article', { name: /Rome & Florence/ })).toContainText('TLV')
 })
 
+test('the Android APK link sits with the hero buttons', async ({ page }) => {
+  await expect(page.locator('.ctas').getByRole('link', { name: /Skyhop for Android/ })).toBeVisible()
+})
+
 test('the page never scrolls sideways', async ({ page }) => {
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
   expect(overflow).toBeLessThanOrEqual(0)

@@ -225,6 +225,7 @@ function Landing({ trips }: { trips: Trip[] }) {
               <a className="btn solid" href="#/new" data-help="plan">{t('Plan a trip')}</a>
               <a className="btn" href={SKYHOP_URL}>{t('Search flights')}</a>
               <a className="btn" href={MYMAPS_URL}>{t('Open a map')}</a>
+              <a className="btn" href={SKYHOP_APK_URL} download>{t('Skyhop for Android (APK)')}</a>
             </div>
           </div>
           <TripPass trip={example} label={t('Trip · example')} />

@@ -123,6 +123,13 @@ footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;color:
   .app{grid-template-columns:1fr;gap:12px}
   .gate{font-size:1.2rem}
 }
+@media (max-width:600px){
+  .bar{display:grid;grid-template-columns:1fr auto auto;gap:10px 8px}
+  .bar .nav{grid-row:2;grid-column:1/-1;flex-wrap:nowrap;overflow-x:auto;gap:18px;white-space:nowrap}
+  .bar .account{grid-row:3;grid-column:1/-1;flex-wrap:wrap}
+  .lang-btn{margin-inline-start:0}
+  .ctas .btn{flex:1 1 100%;justify-content:center}
+}
 @media (max-width:420px){
   .fields{grid-template-columns:1fr 1fr}
   .pass-stub{width:64px}
