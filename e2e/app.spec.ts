@@ -13,8 +13,9 @@ test('shows both apps and the example trip', async ({ page }) => {
   await expect(page.getByRole('article', { name: /Rome & Florence/ })).toContainText('TLV')
 })
 
-test('the Android APK link sits with the hero buttons', async ({ page }) => {
-  await expect(page.locator('.ctas').getByRole('link', { name: /Skyhop for Android/ })).toBeVisible()
+test('the Android APK links cover all three apps', async ({ page }) => {
+  await expect(page.locator('.ctas').getByRole('link', { name: /Android apps/ })).toBeVisible()
+  for (const name of ['Travel Hub', 'Skyhop', 'MyMaps AI']) await expect(page.getByRole('link', { name: `${name} for Android` })).toHaveCount(1)
 })
 
 test('the page never scrolls sideways', async ({ page }) => {

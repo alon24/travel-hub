@@ -14,7 +14,7 @@ import { TripShare } from './components/TripShare.tsx'
 import { SharedTrip } from './components/SharedTrip.tsx'
 import { pickFile } from './auth/picker.ts'
 import { TripsList } from './components/TripsList.tsx'
-import { GITHUB_URL, MYMAPS_URL, SKYHOP_APK_URL, SKYHOP_URL } from './links.ts'
+import { APK_URLS, GITHUB_URL, MYMAPS_URL, SKYHOP_URL } from './links.ts'
 import { AccountApi, type Role } from './lib/account.ts'
 import { aiEnabled } from './lib/ai.ts'
 import { draftTrip } from './lib/planAi.ts'
@@ -225,7 +225,7 @@ function Landing({ trips }: { trips: Trip[] }) {
               <a className="btn solid" href="#/new" data-help="plan">{t('Plan a trip')}</a>
               <a className="btn" href={SKYHOP_URL}>{t('Search flights')}</a>
               <a className="btn" href={MYMAPS_URL}>{t('Open a map')}</a>
-              <a className="btn" href={SKYHOP_APK_URL}>{t('Skyhop for Android (APK)')}</a>
+              <a className="btn" href="#android">{t('Android apps (APK)')}</a>
             </div>
           </div>
           <TripPass trip={example} label={t('Trip · example')} />
@@ -256,9 +256,11 @@ function Landing({ trips }: { trips: Trip[] }) {
               </div>
             ))}
           </div>
-          <p className="apk">
-            <a className="btn" href={SKYHOP_APK_URL}>{t('Skyhop for Android (APK)')}</a>
-            <span className="muted">{t('On the page that opens, tap skyhop.apk under Assets, then open the file and allow installs from this source. Download it again when there is a newer version.')}</span>
+          <p className="apk" id="android">
+            <a className="btn" href={APK_URLS.hub}>{t('Travel Hub for Android')}</a>
+            <a className="btn" href={APK_URLS.skyhop}>{t('Skyhop for Android')}</a>
+            <a className="btn" href={APK_URLS.mymaps}>{t('MyMaps AI for Android')}</a>
+            <span className="muted">{t('On the page that opens, tap the .apk under Assets, then open the file and allow installs from this source. Download it again when there is a newer version.')}</span>
           </p>
         </section>
 
