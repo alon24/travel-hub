@@ -31,9 +31,10 @@ export const HE: Record<string, string> = {
   'Open a map': 'פתיחת מפה',
   'Trip · example': 'טיול · דוגמה',
   'The apps': 'האפליקציות',
-  'Skyhop for Android (APK)': 'Skyhop לאנדרואיד (APK)',
-  'On the page that opens, tap skyhop.apk under Assets, then open the file and allow installs from this source. Download it again when there is a newer version.':
-    'בדף שנפתח לוחצים על skyhop.apk תחת Assets, פותחים את הקובץ ומאשרים התקנה ממקור זה. מורידים שוב כשיש גרסה חדשה.',
+  'Android app (APK)': 'אפליקציה לאנדרואיד (APK)',
+  'Travel Hub for Android': 'Travel Hub לאנדרואיד',
+  'On the page that opens, tap the .apk under Assets, then open the file and allow installs from this source. It holds Travel Hub, Skyhop and MyMaps AI in one app. Download it again when there is a newer version.':
+    'בדף שנפתח לוחצים על קובץ ה-apk תחת Assets, פותחים את הקובץ ומאשרים התקנה ממקור זה. האפליקציה כוללת את Travel Hub, Skyhop ו-MyMaps AI במקום אחד. מורידים שוב כשיש גרסה חדשה.',
   'Two apps today, joined by a third piece.': 'שתי אפליקציות היום, ופריט שלישי שמחבר ביניהן.',
   New: 'חדש',
   'Introducing Trip': 'מכירים את "טיול"',
