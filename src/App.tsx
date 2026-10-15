@@ -225,7 +225,7 @@ function Landing({ trips }: { trips: Trip[] }) {
               <a className="btn solid" href="#/new" data-help="plan">{t('Plan a trip')}</a>
               <a className="btn" href={SKYHOP_URL}>{t('Search flights')}</a>
               <a className="btn" href={MYMAPS_URL}>{t('Open a map')}</a>
-              <a className="btn" href={SKYHOP_APK_URL} download>{t('Skyhop for Android (APK)')}</a>
+              <a className="btn" href={SKYHOP_APK_URL}>{t('Skyhop for Android (APK)')}</a>
             </div>
           </div>
           <TripPass trip={example} label={t('Trip · example')} />
@@ -257,8 +257,8 @@ function Landing({ trips }: { trips: Trip[] }) {
             ))}
           </div>
           <p className="apk">
-            <a className="btn" href={SKYHOP_APK_URL} download>{t('Skyhop for Android (APK)')}</a>
-            <span className="muted">{t('Open the file on your phone and allow installs from this source. Download it again when there is a newer version.')}</span>
+            <a className="btn" href={SKYHOP_APK_URL}>{t('Skyhop for Android (APK)')}</a>
+            <span className="muted">{t('On the page that opens, tap skyhop.apk under Assets, then open the file and allow installs from this source. Download it again when there is a newer version.')}</span>
           </p>
         </section>
 
