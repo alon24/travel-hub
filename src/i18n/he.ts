@@ -32,8 +32,8 @@ export const HE: Record<string, string> = {
   'Trip · example': 'טיול · דוגמה',
   'The apps': 'האפליקציות',
   'Skyhop for Android (APK)': 'Skyhop לאנדרואיד (APK)',
-  'Open the file on your phone and allow installs from this source. Download it again when there is a newer version.':
-    'פותחים את הקובץ בטלפון ומאשרים התקנה ממקור זה. מורידים שוב כשיש גרסה חדשה.',
+  'On the page that opens, tap skyhop.apk under Assets, then open the file and allow installs from this source. Download it again when there is a newer version.':
+    'בדף שנפתח לוחצים על skyhop.apk תחת Assets, פותחים את הקובץ ומאשרים התקנה ממקור זה. מורידים שוב כשיש גרסה חדשה.',
   'Two apps today, joined by a third piece.': 'שתי אפליקציות היום, ופריט שלישי שמחבר ביניהן.',
   New: 'חדש',
   'Introducing Trip': 'מכירים את "טיול"',
